@@ -1,2 +1,2 @@
-# de.uke.iam.env-data-collector
+# de.uke.iam.air-pollution
 Collect environmental data from multiple APIs
