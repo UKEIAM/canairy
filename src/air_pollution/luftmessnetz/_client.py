@@ -1,8 +1,7 @@
 from datetime import datetime
-from collections.abc import Callable
 import json
 import time
-from typing import Any, Protocol
+from typing import Any
 import logging
 
 import hishel
