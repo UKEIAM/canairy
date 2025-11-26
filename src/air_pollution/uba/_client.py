@@ -1,13 +1,14 @@
 import logging
 import time
-from typing import Any
+from typing import Any, cast
 
 import hishel
 import httpx
 from ratelimit import limits, sleep_and_retry
 
-from ._models import BaseParams, GetStationParams, UBAStationGetResponse
-from ._typing import Usage, Language, Timestamp
+from ._models import BaseParams, BaseResponse, GetStationParams, UBAStationGetResponse
+from .components import ComponentsGetParams, create_components_get_response_model
+from ._typing import Usage, Language, Timestamp, Index
 
 __all__ = ["UBAClient"]
 
@@ -32,6 +33,14 @@ class UBAClient:
         params = GetStationParams.from_dt(usage, dt_start, dt_stop, lang)
         response = self._get("stations", params=params)
         return UBAStationGetResponse.from_response(response)
+
+    def get_components(
+        self, lang: Language = None, index: Index = None
+    ) -> BaseResponse:
+        params = ComponentsGetParams(lang=lang, index=index)
+        response = self._get("components", params=params)
+        rsp_model = create_components_get_response_model(response)
+        return rsp_model(**response)  # type: ignore
 
     @sleep_and_retry
     @limits(120, period=60)

@@ -2,12 +2,14 @@ import datetime
 from typing import Any, Self
 from pydantic import BaseModel
 
-from ._typing import Language, Usage, Timestamp, StrDict
+from ._typing import Language, Usage, Timestamp, StrDict, Index
 
 
 class BaseParams(BaseModel):
     pass
 
+class BaseResponse(BaseModel):
+    pass
 
 class GetStationParams(BaseParams):
     usage: Usage = None
