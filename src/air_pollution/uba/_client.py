@@ -1,6 +1,7 @@
+import datetime
 import logging
 import time
-from typing import Any, cast
+from typing import Any
 
 import hishel
 import httpx
@@ -8,6 +9,8 @@ from ratelimit import limits, sleep_and_retry
 
 from ._models import BaseParams, BaseResponse, GetStationParams, UBAStationGetResponse
 from .components import ComponentsGetParams, create_components_get_response_model
+from .measures import MeasuresGetRequestParams
+from .measures._models import MeasuresGetResponse
 from ._typing import Usage, Language, Timestamp, Index
 
 __all__ = ["UBAClient"]
@@ -41,6 +44,23 @@ class UBAClient:
         response = self._get("components", params=params)
         rsp_model = create_components_get_response_model(response)
         return rsp_model(**response)  # type: ignore
+
+    def get_measures(
+            self, 
+            dt_start: datetime.datetime,
+            dt_stop: datetime.datetime,
+            station: int | str | None = None,
+            component: int | None = None,
+            scope: int | None = None
+            ):
+        params = MeasuresGetRequestParams.from_dt(dt_start=dt_start,
+                                                  dt_stop=dt_stop,
+                                                  station=station,
+                                                  component=component,
+                                                  scope=scope)
+        response = self._get("measures", params=params)
+        return MeasuresGetResponse.from_response(response)
+        
 
     @sleep_and_retry
     @limits(120, period=60)

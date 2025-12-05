@@ -11,6 +11,7 @@ class BaseParams(BaseModel):
 class BaseResponse(BaseModel):
     pass
 
+
 class GetStationParams(BaseParams):
     usage: Usage = None
     date_from: datetime.date | None = None
