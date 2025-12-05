@@ -10,6 +10,7 @@ from ratelimit import limits, sleep_and_retry
 from ._models import BaseParams, GetStationParams, UBAStationGetResponse
 from .components import ComponentsGetParams, ComponentsGetResponse 
 from .measures import MeasuresGetRequestParams
+from . scopes import ScopesGetResponse, ScopesGetParams
 from .measures._models import MeasuresGetResponse
 from ._typing import Usage, Language, Timestamp, Index
 
@@ -45,6 +46,13 @@ class UBAClient:
         response = self._get("components", params=params)
         # sp_model = create_components_get_response_model(response)
         return ComponentsGetResponse.from_response(response)
+
+    def get_scopes(
+            self, lang: Language = None, index: Index = None
+            ) -> ScopesGetResponse:
+        params = ScopesGetParams(lang=lang, index=index)
+        response = self._get("scopes", params=params)
+        return ScopesGetResponse.from_response(response)
 
     def get_measures(
             self, 
