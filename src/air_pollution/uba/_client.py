@@ -8,7 +8,7 @@ import httpx
 from ratelimit import limits, sleep_and_retry
 
 from ._models import BaseParams, BaseResponse, GetStationParams, UBAStationGetResponse
-from .components import ComponentsGetParams, create_components_get_response_model
+from .components import ComponentsGetParams, ComponentsGetResponse 
 from .measures import MeasuresGetRequestParams
 from .measures._models import MeasuresGetResponse
 from ._typing import Usage, Language, Timestamp, Index
@@ -40,10 +40,11 @@ class UBAClient:
     def get_components(
         self, lang: Language = None, index: Index = None
     ) -> BaseResponse:
+
         params = ComponentsGetParams(lang=lang, index=index)
         response = self._get("components", params=params)
-        rsp_model = create_components_get_response_model(response)
-        return rsp_model(**response)  # type: ignore
+        # sp_model = create_components_get_response_model(response)
+        return ComponentsGetResponse.from_response(response)
 
     def get_measures(
             self, 
