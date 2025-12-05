@@ -7,7 +7,7 @@ import hishel
 import httpx
 from ratelimit import limits, sleep_and_retry
 
-from ._models import BaseParams, BaseResponse, GetStationParams, UBAStationGetResponse
+from ._models import BaseParams, GetStationParams, UBAStationGetResponse
 from .components import ComponentsGetParams, ComponentsGetResponse 
 from .measures import MeasuresGetRequestParams
 from .measures._models import MeasuresGetResponse
@@ -39,7 +39,7 @@ class UBAClient:
 
     def get_components(
         self, lang: Language = None, index: Index = None
-    ) -> BaseResponse:
+    ) -> ComponentsGetResponse:
 
         params = ComponentsGetParams(lang=lang, index=index)
         response = self._get("components", params=params)
@@ -53,7 +53,7 @@ class UBAClient:
             station: int | str | None = None,
             component: int | None = None,
             scope: int | None = None
-            ):
+            ) -> MeasuresGetResponse:
         params = MeasuresGetRequestParams.from_dt(dt_start=dt_start,
                                                   dt_stop=dt_stop,
                                                   station=station,
