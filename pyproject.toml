@@ -28,6 +28,7 @@ dependencies = [
     "hishel>=0.1.2",
     "httpx-limiter>=0.2.0",
     "httpx>=0.28.1",
+    "polars>=1.28.1",
     "pydantic>=2.11.3",
     "ratelimit>=2.2.1",
 ]
@@ -47,6 +48,13 @@ dev = [
 requires = ["setuptools>=79"]
 build-backend = "setuptools.build_meta"
 
+
+[project.scripts]
+aq-downloader = "air_pollution.scripts.downloader:main"
+
 [[tool.mypy.overrides]]
 module = "ratelimit"
 ignore_missing_imports = true
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]

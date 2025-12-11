@@ -1,0 +1,8 @@
+.venv
+.mdc
+.ipython_checkpoints
+.git
+build/
+data/
+dist/
+.*cache/
