@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Any
 
-import hishel
+from hishel.httpx import SyncCacheClient
 import httpx
 from ratelimit import limits, sleep_and_retry
 
@@ -25,7 +25,7 @@ class UBAClient:
     BASE_URL = "https://luftdaten.umweltbundesamt.de/api/air-data/v4"
 
     def __init__(self) -> None:
-        self._client = hishel.CacheClient()
+        self._client = SyncCacheClient(timeout=60)
 
     def get_stations(
         self,
