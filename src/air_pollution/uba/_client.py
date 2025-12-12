@@ -8,7 +8,7 @@ import httpx
 from ratelimit import limits, sleep_and_retry
 
 from ._models import BaseParams, GetStationParams, UBAStationGetResponse
-from .components import ComponentsGetParams, ComponentsGetResponse 
+from .components import ComponentsGetParams, ComponentsGetResponse
 from .measures import MeasuresGetRequestParams
 from . scopes import ScopesGetResponse, ScopesGetParams
 from .measures._models import MeasuresGetResponse
@@ -55,7 +55,7 @@ class UBAClient:
         return ScopesGetResponse.from_response(response)
 
     def get_measures(
-            self, 
+            self,
             dt_start: datetime.datetime,
             dt_stop: datetime.datetime,
             station: int | str | None = None,
@@ -69,7 +69,7 @@ class UBAClient:
                                                   scope=scope)
         response = self._get("measures", params=params)
         return MeasuresGetResponse.from_response(response)
-        
+
 
     @sleep_and_retry
     @limits(120, period=60)
@@ -78,7 +78,6 @@ class UBAClient:
 
         return (
             backoff(self._client.get, self._url(endpoint), params=params_)
-            .raise_for_status()
             .json()
         )
 
@@ -90,8 +89,12 @@ def backoff(func, *args, **kwargs) -> Any:  # type: ignore
     base = 2
     for i in range(1, MAX_RETRIES + 1):
         try:
-            return func(*args, **kwargs)
+            return func(*args, **kwargs).raise_for_status()
         except httpx.RemoteProtocolError:
+            logging.debug(f"RemoteProtoclolError: retry {i}")
+            timeout = base**i
+            time.sleep(timeout)
+        except httpx.HTTPStatusError:
             logging.debug(f"RemoteProtoclolError: retry {i}")
             timeout = base**i
             time.sleep(timeout)
