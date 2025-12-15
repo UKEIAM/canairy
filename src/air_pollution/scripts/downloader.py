@@ -22,7 +22,7 @@ DEFAULT_COMPONENTS = [
     Component(id=3, code="O3", scope=2),
     Component(id=4, code="SO2", scope=2),
     Component(id=5, code="NO2", scope=2),
-    Component(id=9, code="PM2", scope=1),
+    Component(id=9, code="PM2", scope=2),
 ]
 
 
