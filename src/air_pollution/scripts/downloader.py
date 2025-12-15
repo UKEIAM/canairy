@@ -17,11 +17,11 @@ class Component(BaseModel):
 
 
 DEFAULT_COMPONENTS = [
-    Component(id=1, code="PM10", scope=1),
-    Component(id=2, code="CO", scope=2),
-    Component(id=3, code="O3", scope=1),
-    Component(id=4, code="SO2", scope=1),
-    Component(id=5, code="NO2", scope=1),
+    Component(id=1, code="PM10", scope=2),
+    Component(id=2, code="CO", scope=4),
+    Component(id=3, code="O3", scope=2),
+    Component(id=4, code="SO2", scope=2),
+    Component(id=5, code="NO2", scope=2),
     Component(id=9, code="PM2", scope=1),
 ]
 
