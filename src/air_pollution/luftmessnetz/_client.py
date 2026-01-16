@@ -4,7 +4,7 @@ import time
 from typing import Any
 import logging
 
-import hishel
+from hishel.httpx import SyncCacheClient
 import httpx
 from ratelimit import limits, sleep_and_retry
 
@@ -37,7 +37,7 @@ class LuftmessnetzClient:
     BASE_URL = "https://hamburg.luftmessnetz.de/api"
 
     def __init__(self) -> None:
-        self._client = hishel.CacheClient()
+        self._client = SyncCacheClient()
 
     def get_components(
         self,
