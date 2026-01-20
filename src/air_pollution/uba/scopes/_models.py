@@ -19,7 +19,8 @@ class Scope(BaseModel):
 
     @classmethod
     def from_list_item(cls, item: list[str]) -> Self:
-        return cls(**dict(zip(cls.model_fields.keys(), item)))
+        data = dict(zip(cls.model_fields.keys(), item, strict=False))
+        return cls(**data)
 
 
 class ScopesGetResponse(BaseResponse):
