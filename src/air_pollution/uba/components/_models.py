@@ -1,12 +1,13 @@
 from typing import Any, Self
+
 from pydantic import BaseModel
+
 from .._models import BaseParams, BaseResponse
-from .._typing import Index, Language
+from .._typing import Language
 
 
 class ComponentsGetParams(BaseParams):
     lang: Language
-    index: Index
 
 
 class Component(BaseModel):
@@ -18,12 +19,8 @@ class Component(BaseModel):
 
     @classmethod
     def from_list_item(cls, item: list[str]) -> Self:
-        return cls(**dict(zip(cls.model_fields.keys(), item)))
-
-
-class _BaseComponentsGetResponse(BaseResponse):
-    count: int
-    indices: list[str]
+        data = dict(zip(cls.model_fields.keys(), item, strict=True))
+        return cls(**data)
 
 
 class ComponentsGetResponse(BaseResponse):
@@ -39,5 +36,4 @@ class ComponentsGetResponse(BaseResponse):
             except ValueError:
                 continue
             components.append(Component.from_list_item(val))
-        return cls(indices=response['indices'], data=components)
-
+        return cls(indices=response["indices"], data=components)

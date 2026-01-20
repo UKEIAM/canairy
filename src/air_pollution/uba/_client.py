@@ -38,11 +38,19 @@ class UBAClient:
         response = self._get("stations", params=params)
         return UBAStationGetResponse.from_response(response)
 
-    def get_components(
-        self, lang: Language = None, index: Index = None
+    def get_components(self, lang: Language = None
     ) -> ComponentsGetResponse:
+        """Load a table of all available air pollutants (components) including
+        meta data.
 
-        params = ComponentsGetParams(lang=lang, index=index)
+        Params:
+            lang: Language of component description. Default 'en'
+
+        Returns:
+            Componets response model.
+        """
+
+        params = ComponentsGetParams(lang=lang)
         response = self._get("components", params=params)
         # sp_model = create_components_get_response_model(response)
         return ComponentsGetResponse.from_response(response)
