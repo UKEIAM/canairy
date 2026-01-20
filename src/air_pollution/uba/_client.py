@@ -12,7 +12,7 @@ from .components import ComponentsGetParams, ComponentsGetResponse
 from .measures import MeasuresGetRequestParams
 from . scopes import ScopesGetResponse, ScopesGetParams
 from .measures._models import MeasuresGetResponse
-from ._typing import Usage, Language, Timestamp, Index
+from ._typing import Usage, Language, Timestamp
 
 __all__ = ["UBAClient"]
 
@@ -55,10 +55,8 @@ class UBAClient:
         # sp_model = create_components_get_response_model(response)
         return ComponentsGetResponse.from_response(response)
 
-    def get_scopes(
-            self, lang: Language = None, index: Index = None
-            ) -> ScopesGetResponse:
-        params = ScopesGetParams(lang=lang, index=index)
+    def get_scopes(self, lang: Language = None) -> ScopesGetResponse:
+        params = ScopesGetParams(lang=lang)
         response = self._get("scopes", params=params)
         return ScopesGetResponse.from_response(response)
 
