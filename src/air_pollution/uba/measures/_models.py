@@ -1,11 +1,10 @@
 import datetime
 from typing import Any, Self, Sequence
 
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .._models import BaseParams, BaseResponse
 from .._typing import Index, Language
-
 
 RawDataSeq = Sequence[int | float | str | None]
 
@@ -26,14 +25,13 @@ class MeasuresGetRequestParams(BaseParams):
         dt_stop: datetime.datetime,
         station: int | str | None = None,
         component: int | None = None,
-        scope: int | None = None
+        scope: int | None = None,
     ) -> Self:
         if isinstance(dt_start, datetime.datetime):
             date_from = dt_start.date()
             time_from = int(dt_start.strftime("%H")) + 1
         else:
             raise TypeError("`dt_start` not a valid `datetime`")
-
 
         if isinstance(dt_stop, datetime.datetime):
             date_to = dt_stop.date()
@@ -48,8 +46,9 @@ class MeasuresGetRequestParams(BaseParams):
             time_to=time_to,
             station=station,
             component=component,
-            scope=scope
+            scope=scope,
         )
+
 
 class MeasuresGetResponseRequest(BaseResponse):
     component: str | None = None
@@ -63,12 +62,11 @@ class MeasuresGetResponseRequest(BaseResponse):
     datetime_from: datetime.datetime
     datetime_to: datetime.datetime
 
-    @field_validator('time_to', 'time_from', mode="before")
+    @field_validator("time_to", "time_from", mode="before")
     @classmethod
     def _hour_string_to_time(cls, val: str) -> datetime.time:
         h, m, s = map(lambda x: int(x), val.split(":"))
-        return datetime.time(h-1, m, s)
-
+        return datetime.time(h - 1, m, s)
 
 
 class Measurement(BaseModel):
@@ -83,11 +81,11 @@ class Measurement(BaseModel):
     @classmethod
     def from_list(cls, values: RawDataSeq, date_start, station: int) -> Self:
         item = {k: v for (k, v) in zip(cls.model_fields.keys(), values, strict=True)}
-        item['date_start'] = date_start
-        item['station_id'] = station
+        item["date_start"] = date_start
+        item["station_id"] = station
         return cls(**item)
 
-    @field_validator('date_end', mode="before")
+    @field_validator("date_end", mode="before")
     @classmethod
     def _fix_end_date(cls, val: str) -> datetime.datetime:
         date, time = val.split(" ")
@@ -96,8 +94,9 @@ class Measurement(BaseModel):
         if h == 24:
             h = 0
             parsed_date += datetime.timedelta(days=1)
-        return datetime.datetime(parsed_date.year, parsed_date.month, parsed_date.day, h, m, s)
-
+        return datetime.datetime(
+            parsed_date.year, parsed_date.month, parsed_date.day, h, m, s
+        )
 
 
 class MeasuresGetResponse(BaseResponse):
@@ -107,12 +106,11 @@ class MeasuresGetResponse(BaseResponse):
 
     @classmethod
     def from_response(cls, response: Any) -> Self:
-        request = MeasuresGetResponseRequest(**response['request'])
-        indices = response['indices']
-        data = cls.convert_request_data(response['data'])
+        request = MeasuresGetResponseRequest(**response["request"])
+        indices = response["indices"]
+        data = cls.convert_request_data(response["data"])
         return cls(request=request, indices=indices, data=data)
 
-    
     @staticmethod
     def convert_request_data(data: dict[str, Any]):
         items = []
@@ -121,4 +119,3 @@ class MeasuresGetResponse(BaseResponse):
                 mm = Measurement.from_list(values, date_start, int(station))
                 items.append(mm)
         return items
-
