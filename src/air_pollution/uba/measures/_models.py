@@ -79,7 +79,7 @@ class Measurement(BaseModel):
     station_id: int
 
     @classmethod
-    def from_list(cls, values: RawDataSeq, date_start, station: int) -> Self:
+    def from_list(cls, values: RawDataSeq, date_start: str, station: int) -> Self:
         item = {k: v for (k, v) in zip(cls.model_fields.keys(), values, strict=True)}
         item["date_start"] = date_start
         item["station_id"] = station
@@ -112,7 +112,7 @@ class MeasuresGetResponse(BaseResponse):
         return cls(request=request, indices=indices, data=data)
 
     @staticmethod
-    def convert_request_data(data: dict[str, Any]):
+    def convert_request_data(data: dict[str, Any]) -> Sequence[Measurement]:
         items = []
         for station, timeframes in data.items():
             for date_start, values in timeframes.items():
