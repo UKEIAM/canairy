@@ -1,11 +1,14 @@
 from typing import Any, Self
+
 from pydantic import BaseModel
+
 from .._models import BaseParams, BaseResponse
 from .._typing import Language
 
 
 class ScopesGetParams(BaseParams):
     lang: Language
+
 
 class Scope(BaseModel):
     id: int
