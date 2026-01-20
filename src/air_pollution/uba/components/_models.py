@@ -1,5 +1,7 @@
 from typing import Any, Self
+
 from pydantic import BaseModel
+
 from .._models import BaseParams, BaseResponse
 from .._typing import Language
 
@@ -33,5 +35,4 @@ class ComponentsGetResponse(BaseResponse):
             except ValueError:
                 continue
             components.append(Component.from_list_item(val))
-        return cls(indices=response['indices'], data=components)
-
+        return cls(indices=response["indices"], data=components)
