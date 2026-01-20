@@ -2,7 +2,6 @@ import datetime
 from typing import Any, Self
 
 from pydantic import BaseModel, field_validator, Field
-import polars as pl
 
 from .._models import BaseParams, BaseResponse
 from .._typing import Index, Language
