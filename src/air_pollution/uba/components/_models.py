@@ -21,11 +21,6 @@ class Component(BaseModel):
         return cls(**dict(zip(cls.model_fields.keys(), item)))
 
 
-class _BaseComponentsGetResponse(BaseResponse):
-    count: int
-    indices: list[str]
-
-
 class ComponentsGetResponse(BaseResponse):
     indices: list[str]
     data: list[Component]
