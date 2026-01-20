@@ -106,15 +106,16 @@ class MeasuresGetResponse(BaseResponse):
     def from_response(cls, response: Any) -> Self:
         request = MeasuresGetResponseRequest(**response['request'])
         indices = response['indices']
-        data = convert_request_data(response['data'])
+        data = cls.convert_request_data(response['data'])
         return cls(request=request, indices=indices, data=data)
 
     
-def convert_request_data(data: dict[str, dict[str, list[str]]]):
-    items = []
-    for station, timeframes in data.items():
-        for date_start, values in timeframes.items():
-            mm = Measurement.from_list(values, date_start, int(station))
-            items.append(mm)
-    return items
+    @staticmethod
+    def convert_request_data(data: dict[str, dict[str, list[str]]]):
+        items = []
+        for station, timeframes in data.items():
+            for date_start, values in timeframes.items():
+                mm = Measurement.from_list(values, date_start, int(station))
+                items.append(mm)
+        return items
 
