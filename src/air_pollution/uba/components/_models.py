@@ -19,7 +19,8 @@ class Component(BaseModel):
 
     @classmethod
     def from_list_item(cls, item: list[str]) -> Self:
-        return cls(**dict(zip(cls.model_fields.keys(), item)))
+        data = dict(zip(cls.model_fields.keys(), item, strict=True))
+        return cls(**data)
 
 
 class ComponentsGetResponse(BaseResponse):
