@@ -1,12 +1,11 @@
 from typing import Any, Self
 from pydantic import BaseModel
 from .._models import BaseParams, BaseResponse
-from .._typing import Index, Language
+from .._typing import Language
 
 
 class ComponentsGetParams(BaseParams):
     lang: Language
-    index: Index
 
 
 class Component(BaseModel):
