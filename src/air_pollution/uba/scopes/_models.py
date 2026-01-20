@@ -1,12 +1,13 @@
 from typing import Any, Self
+
 from pydantic import BaseModel
+
 from .._models import BaseParams, BaseResponse
-from .._typing import Index, Language
+from .._typing import Language
 
 
 class ScopesGetParams(BaseParams):
     lang: Language
-    index: Index
 
 
 class Scope(BaseModel):
@@ -19,7 +20,8 @@ class Scope(BaseModel):
 
     @classmethod
     def from_list_item(cls, item: list[str]) -> Self:
-        return cls(**dict(zip(cls.model_fields.keys(), item)))
+        data = dict(zip(cls.model_fields.keys(), item, strict=False))
+        return cls(**data)
 
 
 class ScopesGetResponse(BaseResponse):
@@ -35,4 +37,4 @@ class ScopesGetResponse(BaseResponse):
             except ValueError:
                 continue
             scopes.append(Scope.from_list_item(val))
-        return cls(indices=response['indices'], data=scopes)
+        return cls(indices=response["indices"], data=scopes)
