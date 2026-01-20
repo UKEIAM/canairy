@@ -82,7 +82,7 @@ class Measurement(BaseModel):
 
     @classmethod
     def from_list(cls, values: RawDataSeq, date_start, station: int) -> Self:
-        item = {k: v for (k, v) in zip(cls.model_fields.keys(), values)}
+        item = {k: v for (k, v) in zip(cls.model_fields.keys(), values, strict=True)}
         item['date_start'] = date_start
         item['station_id'] = station
         return cls(**item)
