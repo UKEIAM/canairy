@@ -1,10 +1,13 @@
 import datetime
-from typing import Any, Self
+from typing import Any, Self, Sequence
 
 from pydantic import BaseModel, field_validator, Field
 
 from .._models import BaseParams, BaseResponse
 from .._typing import Index, Language
+
+
+RawDataSeq = Sequence[int | float | str | None]
 
 
 class MeasuresGetRequestParams(BaseParams):
@@ -78,7 +81,7 @@ class Measurement(BaseModel):
     station_id: int
 
     @classmethod
-    def from_list(cls, values: list[int |float|str], date_start, station: int) -> Self:
+    def from_list(cls, values: RawDataSeq, date_start, station: int) -> Self:
         item = {k: v for (k, v) in zip(cls.model_fields.keys(), values)}
         item['date_start'] = date_start
         item['station_id'] = station
@@ -111,7 +114,7 @@ class MeasuresGetResponse(BaseResponse):
 
     
     @staticmethod
-    def convert_request_data(data: dict[str, dict[str, list[str]]]):
+    def convert_request_data(data: dict[str, Any]):
         items = []
         for station, timeframes in data.items():
             for date_start, values in timeframes.items():
