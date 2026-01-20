@@ -40,6 +40,16 @@ class UBAClient:
 
     def get_components(self, lang: Language = None
     ) -> ComponentsGetResponse:
+        """Load a table of all available air pollutants (components) including
+        meta data.
+
+        Params:
+            lang: Language of component description. Default 'en'
+
+        Returns:
+            Componets response model.
+        """
+
         params = ComponentsGetParams(lang=lang)
         response = self._get("components", params=params)
         # sp_model = create_components_get_response_model(response)
