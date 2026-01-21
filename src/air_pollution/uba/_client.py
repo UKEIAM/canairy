@@ -17,7 +17,6 @@ from .scopes import ScopesGetParams, ScopesGetResponse
 __all__ = ["UBAClient"]
 
 logger = logging.getLogger(__name__)
-LOG_FMT = "%(levelname)-10s %(message)s"
 MAX_RETRIES = 8
 
 
