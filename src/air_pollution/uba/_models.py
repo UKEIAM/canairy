@@ -155,7 +155,8 @@ class UBAStationGetResponse(BaseModel):
     def from_response(cls, response: Any) -> Self:
         indices = list(map(lambda x: x.removeprefix("station "), response["indices"]))
         data = [
-            Station.from_flat_dict({k: v for (k, v) in zip(indices, item)})
+            Station.from_flat_dict({k: v for (k, v) in zip(indices, item,
+                                                           strict=True)})
             for item in response["data"].values()
         ]
         return cls(request=response["request"], indices=indices, data=data)
