@@ -40,6 +40,7 @@ class Station(BaseModel):
     synonym: str
     active_from: datetime.date
     active_to: datetime.date | None
+    location: StationLocation
     type: StationType
     network: StationNetwork
     setting: StationSetting
