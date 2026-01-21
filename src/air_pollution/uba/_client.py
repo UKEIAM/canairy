@@ -82,7 +82,8 @@ class UBAClient:
     def _get(self, endpoint: str, params: BaseParams | None = None) -> Any:
         params_ = params.model_dump(exclude_none=True) if params else None
 
-        return backoff(self._client.get, self._url(endpoint), params=params_).json()
+        rsp = backoff(self._client.get, self._url(endpoint), params=params_)
+        return rsp.json()
 
     def _url(self, endpoint: str) -> str:
         return f"{UBAClient.BASE_URL}/{endpoint}/json"
