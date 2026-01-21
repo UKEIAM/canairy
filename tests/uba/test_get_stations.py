@@ -1,9 +1,8 @@
 import pytest
 
 from air_pollution.uba import UBAClient
-from air_pollution.uba._models import (
-    Station, UBAStationGetResponse
-)
+from air_pollution.uba._models import Station, UBAStationGetResponse
+
 
 def test_get_stations(client):
     res = client.get_stations()
