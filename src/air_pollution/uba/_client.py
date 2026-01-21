@@ -3,16 +3,16 @@ import logging
 import time
 from typing import Any
 
-from hishel.httpx import SyncCacheClient
 import httpx
+from hishel.httpx import SyncCacheClient
 from ratelimit import limits, sleep_and_retry
 
 from ._models import BaseParams, GetStationParams, UBAStationGetResponse
+from ._typing import Language, Timestamp, Usage
 from .components import ComponentsGetParams, ComponentsGetResponse
 from .measures import MeasuresGetRequestParams
-from . scopes import ScopesGetResponse, ScopesGetParams
 from .measures._models import MeasuresGetResponse
-from ._typing import Usage, Language, Timestamp
+from .scopes import ScopesGetParams, ScopesGetResponse
 
 __all__ = ["UBAClient"]
 
@@ -38,8 +38,7 @@ class UBAClient:
         response = self._get("stations", params=params)
         return UBAStationGetResponse.from_response(response)
 
-    def get_components(self, lang: Language = None
-    ) -> ComponentsGetResponse:
+    def get_components(self, lang: Language = None) -> ComponentsGetResponse:
         """Load a table of all available air pollutants (components) including
         meta data.
 
@@ -61,31 +60,29 @@ class UBAClient:
         return ScopesGetResponse.from_response(response)
 
     def get_measures(
-            self,
-            dt_start: datetime.datetime,
-            dt_stop: datetime.datetime,
-            station: int | str | None = None,
-            component: int | None = None,
-            scope: int | None = None
-            ) -> MeasuresGetResponse:
-        params = MeasuresGetRequestParams.from_dt(dt_start=dt_start,
-                                                  dt_stop=dt_stop,
-                                                  station=station,
-                                                  component=component,
-                                                  scope=scope)
+        self,
+        dt_start: datetime.datetime,
+        dt_stop: datetime.datetime,
+        station: int | str | None = None,
+        component: int | None = None,
+        scope: int | None = None,
+    ) -> MeasuresGetResponse:
+        params = MeasuresGetRequestParams.from_dt(
+            dt_start=dt_start,
+            dt_stop=dt_stop,
+            station=station,
+            component=component,
+            scope=scope,
+        )
         response = self._get("measures", params=params)
         return MeasuresGetResponse.from_response(response)
 
-
-    @sleep_and_retry
-    @limits(120, period=60)
+    @sleep_and_retry  # type: ignore
+    @limits(120, period=60)  # type: ignore
     def _get(self, endpoint: str, params: BaseParams | None = None) -> Any:
         params_ = params.model_dump(exclude_none=True) if params else None
 
-        return (
-            backoff(self._client.get, self._url(endpoint), params=params_)
-            .json()
-        )
+        return backoff(self._client.get, self._url(endpoint), params=params_).json()
 
     def _url(self, endpoint: str) -> str:
         return f"{UBAClient.BASE_URL}/{endpoint}/json"

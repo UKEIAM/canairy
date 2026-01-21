@@ -1,12 +1,14 @@
 import datetime
-from typing import Any, Self
+from typing import Any, Self, Union
+
 from pydantic import BaseModel
 
-from ._typing import Language, Usage, Timestamp, StrDict, Index
+from ._typing import Language, StrDict, Timestamp, Usage
 
 
 class BaseParams(BaseModel):
     pass
+
 
 class BaseResponse(BaseModel):
     pass
@@ -39,7 +41,6 @@ class GetStationParams(BaseParams):
             time_from = None
         else:
             raise TypeError("`dt_start` not a valid `Timestamp`")
-
 
         if isinstance(dt_stop, datetime.datetime):
             date_to = dt_stop.date()
@@ -94,7 +95,6 @@ class StationLocation(BaseModel):
     longitude: str
     latitude: str
 
-from typing import Union
 
 class Station(BaseModel):
     id: int
@@ -133,10 +133,10 @@ class Station(BaseModel):
                 sm_location[key.replace(" ", "_")] = val
             else:
                 root[key.replace(" ", "_")] = val
-        root['type'] = sm_type
-        root['setting'] = sm_setting
-        root['network'] = sm_network
-        root['location'] = sm_location
+        root["type"] = sm_type
+        root["setting"] = sm_setting
+        root["network"] = sm_network
+        root["location"] = sm_location
         return cls(**root)
 
 
@@ -155,7 +155,7 @@ class UBAStationGetResponse(BaseModel):
     def from_response(cls, response: Any) -> Self:
         indices = list(map(lambda x: x.removeprefix("station "), response["indices"]))
         data = [
-            Station.from_flat_dict({k: v for (k, v) in zip(indices, item)})
+            Station.from_flat_dict({k: v for (k, v) in zip(indices, item, strict=True)})
             for item in response["data"].values()
         ]
         return cls(request=response["request"], indices=indices, data=data)
