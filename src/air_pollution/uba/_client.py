@@ -77,8 +77,8 @@ class UBAClient:
         return MeasuresGetResponse.from_response(response)
 
 
-    @sleep_and_retry
-    @limits(120, period=60)
+    @sleep_and_retry    # type: ignore
+    @limits(120, period=60)    # type: ignore
     def _get(self, endpoint: str, params: BaseParams | None = None) -> Any:
         params_ = params.model_dump(exclude_none=True) if params else None
 
