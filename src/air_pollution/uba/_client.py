@@ -7,12 +7,13 @@ import httpx
 from hishel.httpx import SyncCacheClient
 from ratelimit import limits, sleep_and_retry
 
-from ._models import BaseParams, GetStationParams, UBAStationGetResponse
+from ._models import BaseParams
 from ._typing import Language, Timestamp, Usage
 from .components import ComponentsGetParams, ComponentsGetResponse
 from .measures import MeasuresGetRequestParams
 from .measures._models import MeasuresGetResponse
 from .scopes import ScopesGetParams, ScopesGetResponse
+from .stations import GetStationParams, UBAStationGetResponse
 
 __all__ = ["UBAClient"]
 
