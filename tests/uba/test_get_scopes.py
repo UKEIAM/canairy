@@ -8,6 +8,7 @@ def test_get_scopes(client):
     res = client.get_scopes()
     assert isinstance(res, ScopesGetResponse)
 
+
 def test_get_scopes_lang(client):
     res = client.get_scopes(lang="de")
     assert isinstance(res, ScopesGetResponse)

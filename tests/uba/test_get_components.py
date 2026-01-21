@@ -8,6 +8,7 @@ def test_get_components(client):
     res = client.get_components()
     assert isinstance(res, ComponentsGetResponse)
 
+
 def test_get_components_lang(client):
     res = client.get_components(lang="de")
     assert isinstance(res, ComponentsGetResponse)
