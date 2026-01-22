@@ -12,6 +12,7 @@ from ._typing import Language, Timestamp, Usage
 from .components import ComponentsGetParams, ComponentsGetResponse
 from .measures import MeasuresGetRequestParams
 from .measures._models import MeasuresGetResponse
+from .networks import UBANetworksGetParams, UBANetworksGetResponse
 from .scopes import ScopesGetParams, ScopesGetResponse
 from .stations import GetStationParams, UBAStationGetResponse
 
@@ -76,6 +77,19 @@ class UBAClient:
         )
         response = self._get("measures", params=params)
         return MeasuresGetResponse.from_response(response)
+
+    def get_networks(self, lang: Language | None = None) -> UBANetworksGetResponse:
+        """Get a list of all air qualityt measurement networks.
+
+        Args:
+            lang:   Description languange. Default 'en'.
+
+        Returns:
+            Networks response model.
+        """
+        params = UBANetworksGetParams(lang=lang)
+        response = self._get("networks", params=params)
+        return UBANetworksGetResponse.from_response(response)
 
     @sleep_and_retry  # type: ignore
     @limits(120, period=60)  # type: ignore
