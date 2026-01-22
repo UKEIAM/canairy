@@ -4,8 +4,8 @@ from typing import Any, Self, Union
 from pydantic import BaseModel
 
 from .._models import BaseParams, UBAResponseRequest
-from ..networks import Network
 from .._typing import Language, StrDict, Timestamp, Usage
+from ..networks import Network
 
 
 class StationType(BaseModel):
