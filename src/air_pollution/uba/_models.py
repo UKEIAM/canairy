@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any, Generator, Self
 
 from pydantic import BaseModel
 
@@ -10,7 +10,15 @@ class BaseParams(BaseModel):
 
 
 class BaseResponse(BaseModel):
-    pass
+    @staticmethod
+    def iter_response_data[T](
+        response: dict[str, dict[str, T]],
+    ) -> Generator[T, None, None]:
+        if data := response.get("data"):
+            for val in data.values():
+                yield val
+        else:
+            raise AttributeError("Response is missing `data` attribute")
 
 
 class ItemListModel(BaseModel):
