@@ -13,7 +13,7 @@ from .components import ComponentsGetParams, ComponentsGetResponse
 from .measures import MeasuresGetRequestParams
 from .measures._models import MeasuresGetResponse
 from .networks import UBANetworksGetParams, UBANetworksGetResponse
-from .scopes import ScopesGetParams, ScopesGetResponse
+from .scopes import UBAScopesGetParams, UBAScopesGetResponse
 from .stations import GetStationParams, UBAStationGetResponse
 
 __all__ = ["UBAClient"]
@@ -55,10 +55,10 @@ class UBAClient:
         # sp_model = create_components_get_response_model(response)
         return ComponentsGetResponse.from_response(response)
 
-    def get_scopes(self, lang: Language = None) -> ScopesGetResponse:
-        params = ScopesGetParams(lang=lang)
+    def get_scopes(self, lang: Language = None) -> UBAScopesGetResponse:
+        params = UBAScopesGetParams(lang=lang)
         response = self._get("scopes", params=params)
-        return ScopesGetResponse.from_response(response)
+        return UBAScopesGetResponse.from_response(response)
 
     def get_measures(
         self,
