@@ -1,7 +1,7 @@
 import datetime
 import logging
 import time
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 from hishel.httpx import SyncCacheClient
@@ -15,6 +15,7 @@ from .measures._models import MeasuresGetResponse
 from .networks import UBANetworksGetParams, UBANetworksGetResponse
 from .scopes import UBAScopesGetParams, UBAScopesGetResponse
 from .stations import GetStationParams, UBAStationGetResponse
+from .thresholds import UBAThresholdsGetParams, UBAThresholdsGetResponse
 
 __all__ = ["UBAClient"]
 
@@ -90,6 +91,23 @@ class UBAClient:
         params = UBANetworksGetParams(lang=lang)
         response = self._get("networks", params=params)
         return UBANetworksGetResponse.from_response(response)
+
+    def get_thresholds(
+        self, use: Literal["airquality", "measure"], component_id: int, scope_id: int
+    ) -> UBAThresholdsGetResponse:
+        """Get the thresholds of a component/scope combination.
+
+        Args:
+            use:            Specific usecase
+            component_id:   compnent_id
+            scope_id:       scope_id
+
+        Returns:
+            Thresholds response model.
+        """
+        params = UBAThresholdsGetParams(use=use, component=component_id, scope=scope_id)
+        response = self._get("thresholds", params)
+        return UBAThresholdsGetResponse.from_response(response)
 
     @sleep_and_retry  # type: ignore
     @limits(120, period=60)  # type: ignore
