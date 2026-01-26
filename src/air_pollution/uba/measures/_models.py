@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from .._models import BaseParams, BaseResponse
 from .._typing import Index, Language
+from ..utils import normalize_response_indices
 
 RawDataSeq = Sequence[int | float | str | None]
 
@@ -70,20 +71,22 @@ class MeasuresGetResponseRequest(BaseResponse):
 
 
 class Measurement(BaseModel):
+    date_start: datetime.datetime
+    date_end: datetime.datetime
+    station_id: int
     component_id: int
     scope_id: int
     value: float | None
-    date_end: datetime.datetime
     index: int | None
-    date_start: datetime.datetime
-    station_id: int
 
     @classmethod
-    def from_list(cls, values: RawDataSeq, date_start: str, station: int) -> Self:
-        item = {k: v for (k, v) in zip(cls.model_fields.keys(), values, strict=True)}
-        item["date_start"] = date_start
-        item["station_id"] = station
-        return cls(**item)
+    def from_list(
+        cls, keys: list[str], values: RawDataSeq, date_start: str, station: int
+    ) -> Self:
+        items = {key: val for key, val in zip(keys, values, strict=True)}
+        items["date_start"] = date_start
+        items["station_id"] = station
+        return cls(**items)
 
     @field_validator("date_end", mode="before")
     @classmethod
@@ -108,14 +111,18 @@ class MeasuresGetResponse(BaseResponse):
     def from_response(cls, response: Any) -> Self:
         request = MeasuresGetResponseRequest(**response["request"])
         indices = response["indices"]
-        data = cls.convert_request_data(response["data"])
+        data = cls.convert_request_data(
+            normalize_response_indices(indices), response["data"]
+        )
         return cls(request=request, indices=indices, data=data)
 
     @staticmethod
-    def convert_request_data(data: dict[str, Any]) -> Sequence[Measurement]:
+    def convert_request_data(
+        indices: list[str], data: dict[str, Any]
+    ) -> Sequence[Measurement]:
         items = []
         for station, timeframes in data.items():
             for date_start, values in timeframes.items():
-                mm = Measurement.from_list(values, date_start, int(station))
+                mm = Measurement.from_list(indices, values, date_start, int(station))
                 items.append(mm)
         return items
