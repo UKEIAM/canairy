@@ -7,10 +7,11 @@ from air_pollution.uba.measures._models import MeasuresGetResponse
 
 
 def test_get_measures(client):
-    start = datetime(2025, 1, 1, 0, 0, 0)
-    stop = datetime(2025, 1, 2, 0, 0, 0)
-    res = client.get_measures(start, stop, 1, 1)
+    start = datetime(2016, 1, 1, 0, 0, 0)
+    stop = datetime(2016, 1, 2, 23, 0, 0)
+    res = client.get_measures(start, stop, "DEHH070", 1, 2)
     assert isinstance(res, MeasuresGetResponse)
+    assert len(res.data) > 0
 
 
 @pytest.fixture

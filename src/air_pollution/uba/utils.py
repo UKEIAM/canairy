@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 from .networks import Network
 from .stations import Station
@@ -35,3 +36,20 @@ def filter_stations_active(
             out.append(station)
 
     return out
+
+
+def unpack(indices: list[str] | dict[str, Any]) -> list[str]:
+    """Unpack nested response indices."""
+    if isinstance(indices, dict):
+        for val in indices.values():
+            res = unpack(val)
+        return res
+    elif isinstance(indices, list):
+        return indices
+    else:
+        raise TypeError(f"Unhandled type {type(indices)} in indices.")
+
+
+def normalize_response_indices(indices: dict[str, Any]) -> list[str]:
+    """Normalize case and whitespace."""
+    return [item.lower().replace(" ", "_") for item in unpack(indices)]

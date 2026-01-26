@@ -1,10 +1,24 @@
 import datetime
 import random
+import string
 
 import pytest
 
 from air_pollution.uba import UBAClient
-from air_pollution.uba.utils import filter_stations_active, filter_stations_by_network
+from air_pollution.uba.utils import (
+    filter_stations_active,
+    filter_stations_by_network,
+    unpack,
+)
+
+
+def test_unpack_depth(indices_ok):
+    assert unpack(indices_ok) == ["a", "B", 2, 3.14]
+
+
+def test_unpack_raises(indices_bad):
+    with pytest.raises(TypeError):
+        unpack(indices_bad)
 
 
 def test_filter_stations_by_network(stations, networks):
@@ -50,3 +64,28 @@ def stations(client):
 @pytest.fixture
 def client():
     return UBAClient()
+
+
+@pytest.fixture
+def indices_ok():
+    depth = random.randint(1, 20)
+    keys = random.choices(string.ascii_letters, k=depth)
+    return nested_indices({}, keys, target=["a", "B", 2, 3.14])
+
+
+@pytest.fixture
+def indices_bad():
+    depth = random.randint(1, 20)
+    keys = random.choices(string.ascii_letters, k=depth)
+    return nested_indices({}, keys, target="THIS IS BAD!")
+
+
+def nested_indices(out, keys, target):
+    if len(keys) == 1:
+        out[keys.pop()] = target
+        return out
+    else:
+        k = keys.pop()
+        out[k] = {}
+        nested_indices(out[k], keys, target=target)
+        return out
