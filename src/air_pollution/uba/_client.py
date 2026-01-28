@@ -53,7 +53,6 @@ class UBAClient:
 
         params = ComponentsGetParams(lang=lang)
         response = self._get("components", params=params)
-        # sp_model = create_components_get_response_model(response)
         return ComponentsGetResponse.from_response(response)
 
     def get_scopes(self, lang: Language = None) -> UBAScopesGetResponse:
