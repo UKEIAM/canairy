@@ -10,8 +10,8 @@ from ratelimit import limits, sleep_and_retry
 from ._models import BaseParams
 from ._typing import Language, Timestamp, Usage
 from .components import UBAComponentsGetParams, UBAComponentsGetResponse
-from .measures import MeasuresGetRequestParams
-from .measures._models import MeasuresGetResponse
+from .measures import UBAMeasuresGetRequestParams
+from .measures._models import UBAMeasuresGetResponse
 from .networks import UBANetworksGetParams, UBANetworksGetResponse
 from .scopes import UBAScopesGetParams, UBAScopesGetResponse
 from .stations import UBAStationGetParmas, UBAStationGetResponse
@@ -67,8 +67,8 @@ class UBAClient:
         station: int | str | None = None,
         component: int | None = None,
         scope: int | None = None,
-    ) -> MeasuresGetResponse:
-        params = MeasuresGetRequestParams.from_dt(
+    ) -> UBAMeasuresGetResponse:
+        params = UBAMeasuresGetRequestParams.from_dt(
             dt_start=dt_start,
             dt_stop=dt_stop,
             station=station,
@@ -76,7 +76,7 @@ class UBAClient:
             scope=scope,
         )
         response = self._get("measures", params=params)
-        return MeasuresGetResponse.from_response(response)
+        return UBAMeasuresGetResponse.from_response(response)
 
     def get_networks(self, lang: Language | None = None) -> UBANetworksGetResponse:
         """Get a list of all air qualityt measurement networks.
