@@ -1,1 +1,1 @@
-from ._models import MeasuresGetRequestParams as MeasuresGetRequestParams
+from ._models import UBAMeasuresGetRequestParams as UBAMeasuresGetRequestParams

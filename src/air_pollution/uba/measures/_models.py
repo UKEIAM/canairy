@@ -10,7 +10,7 @@ from ..utils import normalize_response_indices
 RawDataSeq = Sequence[int | float | str | None]
 
 
-class MeasuresGetRequestParams(BaseParams):
+class UBAMeasuresGetRequestParams(BaseParams):
     date_from: datetime.date
     time_from: int = Field(ge=1, le=24)
     date_to: datetime.date
@@ -51,7 +51,7 @@ class MeasuresGetRequestParams(BaseParams):
         )
 
 
-class MeasuresGetResponseRequest(BaseResponse):
+class UBAMeasuresGetResponseRequest(BaseResponse):
     component: str | None = None
     station: str | None = None
     date_from: datetime.date
@@ -102,14 +102,14 @@ class Measurement(BaseModel):
         )
 
 
-class MeasuresGetResponse(BaseResponse):
-    request: MeasuresGetResponseRequest
+class UBAMeasuresGetResponse(BaseResponse):
+    request: UBAMeasuresGetResponseRequest
     indices: dict[str, dict[str, dict[str, list[str]]]]
     data: list[Measurement]
 
     @classmethod
     def from_response(cls, response: Any) -> Self:
-        request = MeasuresGetResponseRequest(**response["request"])
+        request = UBAMeasuresGetResponseRequest(**response["request"])
         indices = response["indices"]
         data = cls.convert_request_data(
             normalize_response_indices(indices), response["data"]

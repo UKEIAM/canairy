@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from .._models import BaseParams, UBAResponseRequest
 from .._typing import Language, StrDict, Timestamp, Usage
-from ..networks import Network
+from ..networks import UBANetwork
 
 
 class StationType(BaseModel):
@@ -37,7 +37,7 @@ class Station(BaseModel):
     active_to: datetime.date | None
     location: StationLocation
     type: StationType
-    network: Network
+    network: UBANetwork
     setting: StationSetting
 
     @classmethod
@@ -73,7 +73,7 @@ class Station(BaseModel):
         return cls(**root)
 
 
-class GetStationParams(BaseParams):
+class UBAStationGetParmas(BaseParams):
     usage: Usage = None
     date_from: datetime.date | None = None
     time_from: int | None = None

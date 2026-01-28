@@ -6,11 +6,11 @@ from .._models import BaseParams, BaseResponse
 from .._typing import Language
 
 
-class ComponentsGetParams(BaseParams):
+class UBAComponentsGetParams(BaseParams):
     lang: Language
 
 
-class Component(BaseModel):
+class UBAComponent(BaseModel):
     id: int
     code: str
     symbol: str
@@ -23,17 +23,17 @@ class Component(BaseModel):
         return cls(**data)
 
 
-class ComponentsGetResponse(BaseResponse):
+class UBAComponentsGetResponse(BaseResponse):
     indices: list[str]
-    data: list[Component]
+    data: list[UBAComponent]
 
     @classmethod
     def from_response(cls, response: dict[str, Any]) -> Self:
-        components: list[Component] = []
+        components: list[UBAComponent] = []
         for key, val in response.items():
             try:
                 int(key)
             except ValueError:
                 continue
-            components.append(Component.from_list_item(val))
+            components.append(UBAComponent.from_list_item(val))
         return cls(indices=response["indices"], data=components)
