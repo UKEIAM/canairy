@@ -1,16 +1,16 @@
 import datetime
 from typing import Any
 
-from .networks import Network
+from .networks import UBANetwork
 from .stations import Station
 
 
 def filter_stations_by_network(
-    stations: list[Station], networks: list[Network], query: int | str | Network
+    stations: list[Station], networks: list[UBANetwork], query: int | str | UBANetwork
 ) -> list[Station]:
     out = []
     for station in stations:
-        for field in Network.model_fields.keys():
+        for field in UBANetwork.model_fields.keys():
             if getattr(station.network, field) == query:
                 out.append(station)
 
