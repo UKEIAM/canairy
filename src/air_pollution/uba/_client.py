@@ -64,9 +64,9 @@ class UBAClient:
         self,
         dt_start: datetime.datetime,
         dt_stop: datetime.datetime,
-        station: int | str | None = None,
-        component: int | None = None,
-        scope: int | None = None,
+        station: int | str,
+        component: int,
+        scope: int,
     ) -> UBAMeasuresGetResponse:
         params = UBAMeasuresGetRequestParams.from_dt(
             dt_start=dt_start,

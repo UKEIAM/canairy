@@ -15,18 +15,18 @@ class UBAMeasuresGetRequestParams(BaseParams):
     time_from: int = Field(ge=1, le=24)
     date_to: datetime.date
     time_to: int = Field(ge=1, le=24)
-    station: int | str | None = None
-    component: int | None = None
-    scope: int | None = None
+    station: int | str
+    component: int
+    scope: int
 
     @classmethod
     def from_dt(
         cls,
         dt_start: datetime.datetime,
         dt_stop: datetime.datetime,
-        station: int | str | None = None,
-        component: int | None = None,
-        scope: int | None = None,
+        station: int | str,
+        component: int,
+        scope: int,
     ) -> Self:
         if isinstance(dt_start, datetime.datetime):
             date_from = dt_start.date()
