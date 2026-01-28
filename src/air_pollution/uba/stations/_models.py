@@ -4,7 +4,7 @@ from typing import Any, Self, Union
 from pydantic import BaseModel
 
 from .._models import BaseParams, UBAResponseRequest
-from .._typing import Language, StrDict, Timestamp, Usage
+from .._typing import Language, StrDict, Usage
 from ..networks import UBANetwork
 
 
@@ -85,33 +85,27 @@ class UBAStationGetParmas(BaseParams):
     def from_dt(
         cls,
         usage: Usage,
-        dt_start: Timestamp | None,
-        dt_stop: Timestamp | None,
+        dt_start: datetime.datetime | None,
+        dt_stop: datetime.datetime | None,
         lang: Language,
     ) -> Self:
         if isinstance(dt_start, datetime.datetime):
             date_from = dt_start.date()
             time_from = int(dt_start.strftime("%H")) + 1
-        elif isinstance(dt_start, datetime.date):
-            date_from = dt_start
-            time_from = None
         elif dt_start is None:
             date_from = None
             time_from = None
         else:
-            raise TypeError("`dt_start` not a valid `Timestamp`")
+            raise TypeError("`dt_start` not a valid `datetime`")
 
         if isinstance(dt_stop, datetime.datetime):
             date_to = dt_stop.date()
             time_to = int(dt_stop.strftime("%H")) + 1
-        elif isinstance(dt_stop, datetime.date):
-            date_to = dt_stop
-            time_to = None
         elif dt_start is None:
             date_to = None
             time_to = None
         else:
-            raise TypeError("`dt_stop` not a valid `Timestamp`")
+            raise TypeError("`dt_stop` not a valid `datetime`")
 
         return cls(
             usage=usage,

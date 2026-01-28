@@ -8,7 +8,7 @@ from hishel.httpx import SyncCacheClient
 from ratelimit import limits, sleep_and_retry
 
 from ._models import BaseParams
-from ._typing import Language, Timestamp, Usage
+from ._typing import Language, Usage
 from .components import UBAComponentsGetParams, UBAComponentsGetResponse
 from .measures import UBAMeasuresGetRequestParams
 from .measures._models import UBAMeasuresGetResponse
@@ -32,8 +32,8 @@ class UBAClient:
     def get_stations(
         self,
         usage: Usage = None,
-        dt_start: Timestamp = None,
-        dt_stop: Timestamp = None,
+        dt_start: datetime.datetime | None = None,
+        dt_stop: datetime.datetime | None = None,
         lang: Language = None,
     ) -> UBAStationGetResponse:
         params = UBAStationGetParmas.from_dt(usage, dt_start, dt_stop, lang)
