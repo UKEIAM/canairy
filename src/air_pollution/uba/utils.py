@@ -9,6 +9,8 @@ def filter_stations_by_network(
     stations: list[Station], networks: list[UBANetwork], query: int | str | UBANetwork
 ) -> list[Station]:
     out = []
+    if isinstance(query, str) and len(query) == 2:
+        query = query.upper()
     for station in stations:
         for field in UBANetwork.model_fields.keys():
             if getattr(station.network, field) == query:
