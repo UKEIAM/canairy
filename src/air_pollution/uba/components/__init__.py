@@ -1,2 +1,2 @@
-from ._models import ComponentsGetParams as ComponentsGetParams
-from ._models import ComponentsGetResponse as ComponentsGetResponse
+from ._models import UBAComponentsGetParams as UBAComponentsGetParams
+from ._models import UBAComponentsGetResponse as UBAComponentsGetResponse

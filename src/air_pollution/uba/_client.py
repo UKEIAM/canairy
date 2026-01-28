@@ -9,7 +9,7 @@ from ratelimit import limits, sleep_and_retry
 
 from ._models import BaseParams
 from ._typing import Language, Timestamp, Usage
-from .components import ComponentsGetParams, ComponentsGetResponse
+from .components import UBAComponentsGetParams, UBAComponentsGetResponse
 from .measures import MeasuresGetRequestParams
 from .measures._models import MeasuresGetResponse
 from .networks import UBANetworksGetParams, UBANetworksGetResponse
@@ -40,7 +40,7 @@ class UBAClient:
         response = self._get("stations", params=params)
         return UBAStationGetResponse.from_response(response)
 
-    def get_components(self, lang: Language = None) -> ComponentsGetResponse:
+    def get_components(self, lang: Language = None) -> UBAComponentsGetResponse:
         """Load a table of all available air pollutants (components) including
         meta data.
 
@@ -51,9 +51,9 @@ class UBAClient:
             Componets response model.
         """
 
-        params = ComponentsGetParams(lang=lang)
+        params = UBAComponentsGetParams(lang=lang)
         response = self._get("components", params=params)
-        return ComponentsGetResponse.from_response(response)
+        return UBAComponentsGetResponse.from_response(response)
 
     def get_scopes(self, lang: Language = None) -> UBAScopesGetResponse:
         params = UBAScopesGetParams(lang=lang)
