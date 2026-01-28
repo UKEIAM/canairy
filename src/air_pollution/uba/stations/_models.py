@@ -73,7 +73,7 @@ class Station(BaseModel):
         return cls(**root)
 
 
-class GetStationParams(BaseParams):
+class UBAStationGetParmas(BaseParams):
     usage: Usage = None
     date_from: datetime.date | None = None
     time_from: int | None = None

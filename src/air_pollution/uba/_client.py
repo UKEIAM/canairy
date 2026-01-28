@@ -14,7 +14,7 @@ from .measures import MeasuresGetRequestParams
 from .measures._models import MeasuresGetResponse
 from .networks import UBANetworksGetParams, UBANetworksGetResponse
 from .scopes import UBAScopesGetParams, UBAScopesGetResponse
-from .stations import GetStationParams, UBAStationGetResponse
+from .stations import UBAStationGetParmas, UBAStationGetResponse
 from .thresholds import UBAThresholdsGetParams, UBAThresholdsGetResponse
 
 __all__ = ["UBAClient"]
@@ -36,7 +36,7 @@ class UBAClient:
         dt_stop: Timestamp = None,
         lang: Language = None,
     ) -> UBAStationGetResponse:
-        params = GetStationParams.from_dt(usage, dt_start, dt_stop, lang)
+        params = UBAStationGetParmas.from_dt(usage, dt_start, dt_stop, lang)
         response = self._get("stations", params=params)
         return UBAStationGetResponse.from_response(response)
 
