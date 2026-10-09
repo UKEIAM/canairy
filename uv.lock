@@ -24,7 +24,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "hishel", specifier = ">=0.1.2" },
+    { name = "hishel", specifier = ">=1.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "httpx-limiter", specifier = ">=0.2.0" },
     { name = "pydantic", specifier = ">=2.11.3" },

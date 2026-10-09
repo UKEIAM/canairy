@@ -37,7 +37,7 @@ class LuftmessnetzClient:
     BASE_URL = "https://hamburg.luftmessnetz.de/api"
 
     def __init__(self) -> None:
-        self._client = SyncCacheClient()
+        self._client = SyncCacheClient(timeout=60)
 
     def get_components(
         self,
