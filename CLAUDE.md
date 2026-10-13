@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Python library (`canairy`, src layout) wrapping public air-quality APIs, plus a bulk-download CLI. Two API clients exist:
 
-- `canairy.luftmessnetz` — Hamburger Luftmessnetz (`https://hamburg.luftmessnetz.de/api`)
+- `canairy.hh` — Hamburg, Hamburger Luftmessnetz (`https://hamburg.luftmessnetz.de/api`)
 - `canairy.uba` — Umweltbundesamt air-data v4 (`https://luftdaten.umweltbundesamt.de/api/air-data/v4`)
 
 The package is a pure API client: analysis code (data loading, exposure indices) lives outside this repository.
@@ -25,7 +25,7 @@ uv run mypy src                           # type check (pydantic mypy plugin ena
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/luftmessnetz/` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py` is offline.
+Tests in `tests/hh/` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py` is offline.
 
 ## Architecture
 
@@ -36,14 +36,14 @@ Both clients share the same shape, implemented independently per package (no sha
 - HTTP goes through a `hishel.httpx.SyncCacheClient` (timeout 60 s), so repeated calls may be served from cache.
 - `_typing.py` holds `Literal` aliases for allowed API parameter values; `_models.py` holds pydantic params/response models.
 
-Luftmessnetz specifics:
-- Responses are lists of objects; models subclass `ItemListModel` and use `validation_alias` for camelCase fields.
+HH (Hamburg) specifics:
+- Responses are lists of objects; public models carry an `HH` prefix (e.g. `HHStation`), subclass `ItemListModel` and use `validation_alias` for camelCase fields.
 - `_get` issues a HEAD first and switches to streaming when the response is chunked / lacks content-length (the data endpoints stream; every call costs two requests).
 - `backoff()` retries only `httpx.RemoteProtocolError` and returns `None` once retries are exhausted (no error raised).
 - Datetimes are serialized as `%d.%m.%Y %H:%M` and interpreted as local time; responses carry `+01:00`/`+02:00` offsets.
 - **Silent truncation:** a data request returns at most 745 timestamps for hourly-resolution periods (`1h`, `8hg`) and 365 for daily (`24h`), with HTTP 200, keeping the *latest* part of the range. Request hourly data per month, daily data per half-year.
 - Hourly/daily data start 2012-01-01; `*_1m` monthly means go back to 1984. `timespan="all"` on station data returns only the last 12 months.
-- `StationData.value` is typed `int` and fails on `null` values (`ComponentData.value` is `float | None`).
+- `HHStationData.value` is typed `int` and fails on `null` values (`HHComponentData.value` is `float | None`).
 - `aqi.py` contains static German AQI bins/thresholds/ratings, not API calls.
 
 UBA specifics:

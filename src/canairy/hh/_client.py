@@ -12,28 +12,28 @@ from httpx._types import QueryParamTypes
 
 from ._models import (
     BaseParams,
-    Component,
-    ComponentParams,
-    ComponentData,
-    ComponentDataParams,
-    Core,
-    Station,
-    StationDataParams,
-    Threshold,
-    ListParams,
-    StationData,
+    HHComponent,
+    HHComponentParams,
+    HHComponentData,
+    HHComponentDataParams,
+    HHCore,
+    HHStation,
+    HHStationDataParams,
+    HHThreshold,
+    HHListParams,
+    HHStationData,
 )
 
 from ._typing import GroupCodes_T, TimeSpans_T, Periods_T
 
-__all__ = ["LuftmessnetzClient"]
+__all__ = ["HHClient"]
 
 logger = logging.getLogger(__name__)
 LOG_FMT = "%(levelname)-10s %(message)s"
 MAX_RETRIES = 8
 
 
-class LuftmessnetzClient:
+class HHClient:
     BASE_URL = "https://hamburg.luftmessnetz.de/api"
 
     def __init__(self) -> None:
@@ -44,10 +44,10 @@ class LuftmessnetzClient:
         *,
         active: bool | None = None,
         group_code: GroupCodes_T | None = None,
-    ) -> list[Component]:
+    ) -> list[HHComponent]:
         """Retrieve component's metadata."""
-        params = ComponentParams(active=active, group_code=group_code)
-        return Component.from_response(self._get("components", params))
+        params = HHComponentParams(active=active, group_code=group_code)
+        return HHComponent.from_response(self._get("components", params))
 
     def get_component_data(
         self,
@@ -57,34 +57,34 @@ class LuftmessnetzClient:
         timespan: TimeSpans_T | None = None,
         start: datetime | None = None,
         end: datetime | None = None,
-    ) -> list[ComponentData]:
-        params = ComponentDataParams(
+    ) -> list[HHComponentData]:
+        params = HHComponentDataParams(
             stationgroup=stationgroup, timespan=timespan, start=start, end=end
         )
         result = self._get(f"components/{code}/data", params)
-        return ComponentData.from_response(result)
+        return HHComponentData.from_response(result)
 
-    def get_cores(self) -> list[Core]:
+    def get_cores(self) -> list[HHCore]:
         """Retrieve core metadata."""
-        return Core.from_response(self._get("cores"))
+        return HHCore.from_response(self._get("cores"))
 
-    def get_thresholds(self) -> list[Threshold]:
+    def get_thresholds(self) -> list[HHThreshold]:
         """Retrieve the thresholds for each each core."""
-        return Threshold.from_response(self._get("exceeds"))
+        return HHThreshold.from_response(self._get("exceeds"))
 
     def get_stations(
         self,
         *,
         active: bool | None = None,
         include_hidden: bool | None = None,
-    ) -> list[Station]:
+    ) -> list[HHStation]:
         """Retrieve a list of all measuring stations and their metadata."""
-        params = ListParams(active=active, include_hidden=include_hidden)
-        return Station.from_response(self._get("stations", params=params))
+        params = HHListParams(active=active, include_hidden=include_hidden)
+        return HHStation.from_response(self._get("stations", params=params))
 
-    def get_station(self, code: str) -> Station:
+    def get_station(self, code: str) -> HHStation:
         """Retrieve metadata of a single station."""
-        return Station(**self._get(f"stations/{code}"))
+        return HHStation(**self._get(f"stations/{code}"))
 
     def get_station_data(
         self,
@@ -95,11 +95,11 @@ class LuftmessnetzClient:
         start: datetime | None = None,
         end: datetime | None = None,
         core: str | None = None,
-    ) -> list[StationData]:
-        params = StationDataParams(
+    ) -> list[HHStationData]:
+        params = HHStationDataParams(
             period=period, timespan=timespan, start=start, end=end, core=core
         )
-        return StationData.from_response(
+        return HHStationData.from_response(
             self._get(f"stations/{station_code}/data", params)
         )
 
@@ -135,7 +135,7 @@ class LuftmessnetzClient:
         return buff
 
     def _url(self, endpoint: str) -> str:
-        return f"{LuftmessnetzClient.BASE_URL}/{endpoint}"
+        return f"{HHClient.BASE_URL}/{endpoint}"
 
 
 

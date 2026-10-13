@@ -3,12 +3,12 @@ from datetime import datetime
 
 import pytest
 
-from canairy.luftmessnetz import LuftmessnetzClient
-from canairy.luftmessnetz._models import (
-    Core,
-    Station,
-    StationData,
-    Threshold,
+from canairy.hh import HHClient
+from canairy.hh._models import (
+    HHCore,
+    HHStation,
+    HHStationData,
+    HHThreshold,
 )
 
 
@@ -33,13 +33,13 @@ def test_get_components_data(client):
 def test_get_cores(client):
     res = client.get_cores()
     assert isinstance(res, list)
-    assert all(isinstance(item, Core) for item in res)
+    assert all(isinstance(item, HHCore) for item in res)
 
 
 def test_get_thresholds(client):
     res = client.get_thresholds()
     assert isinstance(res, list)
-    assert all(isinstance(item, Threshold) for item in res)
+    assert all(isinstance(item, HHThreshold) for item in res)
 
 
 def test_get_stations(client):
@@ -48,13 +48,13 @@ def test_get_stations(client):
         test_query = {"active": active, "include_hidden": hidden}
         res = client.get_stations(**test_query)
         assert isinstance(res, list)
-        assert all(isinstance(item, Station) for item in res)
+        assert all(isinstance(item, HHStation) for item in res)
 
 
 def test_get_station(client):
     test_query = {"code": "80kt"}
     res = client.get_station(**test_query)
-    assert isinstance(res, Station)
+    assert isinstance(res, HHStation)
 
 
 def test_get_station_data(client):
@@ -67,9 +67,9 @@ def test_get_station_data(client):
     }
     res = client.get_station_data(**test_query)
     assert isinstance(res, list)
-    assert all(isinstance(item, StationData) for item in res)
+    assert all(isinstance(item, HHStationData) for item in res)
 
 
 @pytest.fixture
 def client():
-    return LuftmessnetzClient()
+    return HHClient()

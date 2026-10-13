@@ -15,7 +15,7 @@ class _ActiveParam(BaseParams):
 class _HiddenParam(BaseParams):
     include_hidden: bool | None = None
 
-class ListParams(_ActiveParam, _HiddenParam):
+class HHListParams(_ActiveParam, _HiddenParam):
     pass
 
 class ItemListModel(BaseParams):
@@ -25,7 +25,7 @@ class ItemListModel(BaseParams):
 
 
 
-class Core(ItemListModel):
+class HHCore(ItemListModel):
     code: str
     active: bool
     group: StationGroup_T
@@ -38,7 +38,7 @@ class Core(ItemListModel):
     components: list[str]
 
 
-class Threshold(ItemListModel):
+class HHThreshold(ItemListModel):
     active: bool
     code: str
     component: str
@@ -59,11 +59,11 @@ class DatetimeRangeParams(BaseParams):
         return dt.strftime("%d.%m.%Y %H:%M")
 
 
-class ComponentParams(_ActiveParam):
+class HHComponentParams(_ActiveParam):
     group_code: GroupCodes_T | None
 
 
-class Station(ItemListModel):
+class HHStation(ItemListModel):
     name: str
     code: str
     code_eu: Annotated[str, Field(validation_alias="codeEu")]
@@ -86,7 +86,7 @@ class Station(ItemListModel):
     exceeds: list[str]
 
 
-class StationData(ItemListModel):
+class HHStationData(ItemListModel):
     datetime: datetime
     station: str
     core: str
@@ -95,12 +95,12 @@ class StationData(ItemListModel):
     value: int
 
 
-class ComponentDataParams(DatetimeRangeParams):
+class HHComponentDataParams(DatetimeRangeParams):
     stationgroup: str | None = None
     timespan: TimeSpans_T | None = None
 
 
-class ComponentData(ItemListModel):
+class HHComponentData(ItemListModel):
     datetime: datetime
     station: str
     core: str
@@ -109,7 +109,7 @@ class ComponentData(ItemListModel):
     value: float | None
 
 
-class Component(ItemListModel):
+class HHComponent(ItemListModel):
     code: str
     core: str
     period: str
@@ -120,7 +120,7 @@ class Component(ItemListModel):
     decimal_points: Annotated[int, Field(validation_alias="decimalPoints")]
 
 
-class StationDataParams(DatetimeRangeParams):
+class HHStationDataParams(DatetimeRangeParams):
     period: Periods_T
     timespan: TimeSpans_T
     core: str | None

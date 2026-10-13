@@ -31,11 +31,11 @@ Use data from the Hamburger Luftmessnetz
 ```python
 Display monthly PM10 data.
 
-import canairy.luftmessnetz as lmn
+import canairy.hh as hh
 import polars as pl
 
 
-client = lmn.LuftmessnetzClient()
+client = hh.HHClient()
 
 res = client.get_component_data("pm10_1m")
 res = pl.DataFrame(res)
