@@ -1,6 +1,6 @@
 [project]
 name = "canairy"
-version = "0.3.0"
+version = "0.3.0rc1"
 description = "Client for German public air-quality APIs (UBA, Hamburger Luftmessnetz)"
 readme = "README.md"
 authors = [
