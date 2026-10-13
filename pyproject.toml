@@ -1,7 +1,7 @@
 [project]
-name = "air-pollution"
-version = "0.2.2"
-description = "Air pollution data collector"
+name = "canairy"
+version = "0.3.0"
+description = "Client for German public air-quality APIs (UBA, Hamburger Luftmessnetz)"
 readme = "README.md"
 authors = [
     { name = "Michael Blaß", email = "m.blass@uke.de" }
@@ -45,7 +45,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project.scripts]
-aq-downloader = "air_pollution.scripts.downloader:main"
+aq-downloader = "canairy.scripts.downloader:main"
 
 [[tool.mypy.overrides]]
 module = "ratelimit"

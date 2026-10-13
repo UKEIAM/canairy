@@ -4,8 +4,8 @@ import string
 
 import pytest
 
-from air_pollution.uba import UBAClient
-from air_pollution.uba.utils import (
+from canairy.uba import UBAClient
+from canairy.uba.utils import (
     filter_stations_active,
     filter_stations_by_network,
     unpack,

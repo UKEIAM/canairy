@@ -1,5 +1,5 @@
-# de.uke.iam.air-pollution
-Collect air pollution measures from multiple APIs.
+# canairy
+Python client for public air-quality APIs: Umweltbundesamt (UBA) and Hamburger Luftmessnetz.
 
 ## Example 1
 Use data from the Umwelt Bundesamt (UBA)
@@ -7,7 +7,7 @@ Use data from the Umwelt Bundesamt (UBA)
 ```python
 from datetime import datetime
 
-from air_pollution.uba import UBAClient
+from canairy.uba import UBAClient
 import polars as pl
 
 
@@ -31,7 +31,7 @@ Use data from the Hamburger Luftmessnetz
 ```python
 Display monthly PM10 data.
 
-import air_pollution.luftmessnetz as lmn
+import canairy.luftmessnetz as lmn
 import polars as pl
 
 

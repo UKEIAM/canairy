@@ -3,43 +3,6 @@ revision = 3
 requires-python = ">=3.11"
 
 [[package]]
-name = "air-pollution"
-version = "0.2.2"
-source = { editable = "." }
-dependencies = [
-    { name = "hishel" },
-    { name = "httpx" },
-    { name = "httpx-limiter" },
-    { name = "pydantic" },
-    { name = "ratelimit" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ipykernel" },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "hishel", specifier = ">=1.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "httpx-limiter", specifier = ">=0.2.0" },
-    { name = "pydantic", specifier = ">=2.11.3" },
-    { name = "ratelimit", specifier = ">=2.2.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "ipykernel", specifier = ">=6.29.5" },
-    { name = "mypy", specifier = ">=1.15.0" },
-    { name = "pytest", specifier = ">=8.3.5" },
-    { name = "ruff", specifier = ">=0.11.5" },
-]
-
-[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -77,6 +40,43 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/4a/e7/82da0a03e7ba5141f05cce0d302e6eed121ae055e0456ca228bf693984bc/asttokens-3.0.0.tar.gz", hash = "sha256:0dcd8baa8d62b0c1d118b399b2ddba3c4aff271d0d7a9e0d4c1681c79035bbc7", size = 61978, upload-time = "2024-11-30T04:30:14.439Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/25/8a/c46dcc25341b5bce5472c718902eb3d38600a903b14fa6aeecef3f21a46f/asttokens-3.0.0-py3-none-any.whl", hash = "sha256:e3078351a059199dd5138cb1c706e6430c05eff2ff136af5eb4790f9d28932e2", size = 26918, upload-time = "2024-11-30T04:30:10.946Z" },
+]
+
+[[package]]
+name = "canairy"
+version = "0.3.0"
+source = { editable = "." }
+dependencies = [
+    { name = "hishel" },
+    { name = "httpx" },
+    { name = "httpx-limiter" },
+    { name = "pydantic" },
+    { name = "ratelimit" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "hishel", specifier = ">=1.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx-limiter", specifier = ">=0.2.0" },
+    { name = "pydantic", specifier = ">=2.11.3" },
+    { name = "ratelimit", specifier = ">=2.2.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipykernel", specifier = ">=6.29.5" },
+    { name = "mypy", specifier = ">=1.15.0" },
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "ruff", specifier = ">=0.11.5" },
 ]
 
 [[package]]

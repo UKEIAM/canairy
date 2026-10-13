@@ -1,7 +1,7 @@
 import pytest
 
-from air_pollution.uba import UBAClient
-from air_pollution.uba.components import UBAComponentsGetResponse
+from canairy.uba import UBAClient
+from canairy.uba.components import UBAComponentsGetResponse
 
 
 def test_get_components(client):

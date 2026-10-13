@@ -1,7 +1,7 @@
 import pytest
 
-from air_pollution.uba import UBAClient
-from air_pollution.uba.networks import UBANetworksGetResponse
+from canairy.uba import UBAClient
+from canairy.uba.networks import UBANetworksGetResponse
 
 
 def test_get_networks(client):

@@ -3,8 +3,8 @@ from datetime import datetime
 
 import pytest
 
-from air_pollution.luftmessnetz import LuftmessnetzClient
-from air_pollution.luftmessnetz._models import (
+from canairy.luftmessnetz import LuftmessnetzClient
+from canairy.luftmessnetz._models import (
     Core,
     Station,
     StationData,

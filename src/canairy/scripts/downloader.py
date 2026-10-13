@@ -7,7 +7,7 @@ import sys
 
 from pydantic import BaseModel
 
-from air_pollution.uba import UBAClient
+from canairy.uba import UBAClient
 
 
 class Component(BaseModel):

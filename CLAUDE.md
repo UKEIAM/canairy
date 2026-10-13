@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Python library (`air_pollution`, src layout) wrapping public air-quality APIs, plus a bulk-download CLI. Two API clients exist:
+Python library (`canairy`, src layout) wrapping public air-quality APIs, plus a bulk-download CLI. Two API clients exist:
 
-- `air_pollution.luftmessnetz` — Hamburger Luftmessnetz (`https://hamburg.luftmessnetz.de/api`)
-- `air_pollution.uba` — Umweltbundesamt air-data v4 (`https://luftdaten.umweltbundesamt.de/api/air-data/v4`)
+- `canairy.luftmessnetz` — Hamburger Luftmessnetz (`https://hamburg.luftmessnetz.de/api`)
+- `canairy.uba` — Umweltbundesamt air-data v4 (`https://luftdaten.umweltbundesamt.de/api/air-data/v4`)
 
 The package is a pure API client: analysis code (data loading, exposure indices) lives outside this repository.
 
@@ -59,5 +59,4 @@ UBA specifics:
 
 ## Docker
 
-- `Dockerfile` + `build.sh` / `run.sh`: dev container (JupyterLab on port 8888, mapped to 51214; venv at `/opt/venvs/${PROJECT}` via `UV_PROJECT_ENVIRONMENT`). `docker/entrypoint.sh` runs `uv sync` and registers an IPython kernel on start.
-- `downloader/` (`build.zsh`, `run.zsh <host data dir>`): slim image running `aq-downloader /data`. The top-level `downloader.dockerfile` is an older variant whose `CMD` calls `aq_downloader` (underscore), which does not exist.
+- `downloader/` (`build.zsh`, `run.zsh <host data dir>`): slim image `canairy_downloader` running `aq-downloader /data`.
