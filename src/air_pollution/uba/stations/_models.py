@@ -101,7 +101,7 @@ class UBAStationGetParmas(BaseParams):
         if isinstance(dt_stop, datetime.datetime):
             date_to = dt_stop.date()
             time_to = int(dt_stop.strftime("%H")) + 1
-        elif dt_start is None:
+        elif dt_stop is None:
             date_to = None
             time_to = None
         else:

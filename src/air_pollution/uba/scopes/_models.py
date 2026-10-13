@@ -24,12 +24,27 @@ class UBAScope(BaseModel):
         return cls(**data)
 
 
+EXPECTED_SCOPE_INDICES = [
+    "scope id",
+    "scope code",
+    "scope time base",
+    "scope time scope",
+    "scope time is max",
+    "scope name",
+]
+
+
 class UBAScopesGetResponse(BaseResponse):
     indices: list[str]
     data: list[UBAScope]
 
     @classmethod
     def from_response(cls, response: dict[str, Any]) -> Self:
+        if response["indices"] != EXPECTED_SCOPE_INDICES:
+            raise ValueError(
+                "Unexpected column order in UBA scopes response: "
+                f"got {response['indices']!r}, expected {EXPECTED_SCOPE_INDICES!r}"
+            )
         scopes: list[UBAScope] = []
         for key, val in response.items():
             try:

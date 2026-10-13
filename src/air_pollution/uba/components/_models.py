@@ -23,12 +23,26 @@ class UBAComponent(BaseModel):
         return cls(**data)
 
 
+EXPECTED_COMPONENT_INDICES = [
+    "component id",
+    "component code",
+    "component symbol",
+    "component unit",
+    "component name",
+]
+
+
 class UBAComponentsGetResponse(BaseResponse):
     indices: list[str]
     data: list[UBAComponent]
 
     @classmethod
     def from_response(cls, response: dict[str, Any]) -> Self:
+        if response["indices"] != EXPECTED_COMPONENT_INDICES:
+            raise ValueError(
+                "Unexpected column order in UBA components response: "
+                f"got {response['indices']!r}, expected {EXPECTED_COMPONENT_INDICES!r}"
+            )
         components: list[UBAComponent] = []
         for key, val in response.items():
             try:
