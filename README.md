@@ -1,4 +1,9 @@
-# canairy
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/UKEIAM/de.uke.iam.canairy/develop/docs/assets/logo-dark.svg">
+    <img src="https://raw.githubusercontent.com/UKEIAM/de.uke.iam.canairy/develop/docs/assets/logo-light.svg" alt="canairy" width="420">
+  </picture>
+</h1>
 
 [![PyPI](https://img.shields.io/pypi/v/canairy)](https://pypi.org/project/canairy/)
 [![Python](https://img.shields.io/pypi/pyversions/canairy)](https://pypi.org/project/canairy/)
