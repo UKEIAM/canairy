@@ -44,7 +44,7 @@ wheels = [
 
 [[package]]
 name = "canairy"
-version = "0.3.0"
+version = "0.3.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "hishel" },

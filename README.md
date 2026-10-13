@@ -1,44 +1,194 @@
 # canairy
-Python client for public air-quality APIs: Umweltbundesamt (UBA) and Hamburger Luftmessnetz.
 
-## Example 1
-Use data from the Umwelt Bundesamt (UBA)
+[![PyPI](https://img.shields.io/pypi/v/canairy)](https://pypi.org/project/canairy/)
+[![Python](https://img.shields.io/pypi/pyversions/canairy)](https://pypi.org/project/canairy/)
+[![License](https://img.shields.io/pypi/l/canairy)](https://github.com/UKEIAM/de.uke.iam.canairy/blob/develop/LICENSE)
+
+Typed Python clients for public German air-quality APIs.
+
+Miners once carried canaries to warn them of bad air underground. `canairy` does
+the modern equivalent: it fetches official air-quality measurements and hands
+them to you as validated [pydantic](https://docs.pydantic.dev) models.
+
+Supported data sources:
+
+| Module         | Source                                                                                        | Coverage                         |
+| -------------- | --------------------------------------------------------------------------------------------- | -------------------------------- |
+| `canairy.uba`  | [Umweltbundesamt](https://luftdaten.umweltbundesamt.de) (UBA), air-data API v4                | All of Germany, from 2016        |
+| `canairy.hh`   | [Hamburger Luftmessnetz](https://hamburg.luftmessnetz.de) (HH)                                | Hamburg, hourly/daily from 2012, monthly from 1984 |
+
+More federal-state networks are planned.
+
+## Features
+
+- One client class per data source with typed `get_*` methods
+- Responses parsed into pydantic models with real `datetime`s
+- Built-in HTTP caching ([hishel](https://hishel.com)), rate limiting (120 requests/min) and retries with exponential backoff
+- `aq-downloader` command for bulk downloads of UBA data
+
+## Installation
+
+```sh
+pip install canairy
+# or
+uv add canairy
+```
+
+Requires Python 3.11 or newer.
+
+> **Note:** `canairy` is pre-1.0. Expect breaking changes between minor versions.
+
+## Quickstart
+
+### Umweltbundesamt (UBA)
 
 ```python
 from datetime import datetime
 
 from canairy.uba import UBAClient
-import polars as pl
 
+uba = UBAClient()
 
-client = UBAClient()
-
-# plot hourly NO2 values measured at station 'DENW124' between January and February 2019 
-rsp = client.get_measures(
-    datetime(2019, 1, 1, 0, 0),
-    datetime(2019, 2, 1, 0, 0),
-    "DENW134",
-    5,
-    2
+# Hourly NO₂ at Hamburg-Sternschanze (DEHH008), 1 January 2024, 00:00–05:00
+res = uba.get_measures(
+    datetime(2024, 1, 1, 0),
+    datetime(2024, 1, 1, 5),  # inclusive
+    station="DEHH008",        # station code or numeric id
+    component=5,              # NO2
+    scope=2,                  # one-hour average
 )
-df = pl.DataFrame(rsp.data)
-df.plot.line(x='date_start', y='value').properties(width=600)
+
+for m in res.data:
+    print(m.date_start, m.value, m.index)
+# 2024-01-01 00:00:00 45.0 2
+# 2024-01-01 01:00:00 33.0 1
+# ...
 ```
 
-## Example 2
-Use data from the Hamburger Luftmessnetz
+Components and scopes are numeric ids. Look them up with the metadata endpoints:
 
 ```python
-Display monthly PM10 data.
+for c in uba.get_components(lang="en").data:
+    print(c.id, c.code, c.unit, c.name)
+# 1 PM10 µg/m³ Particulate matter
+# 3 O3 µg/m³ Ozone
+# 5 NO2 µg/m³ Nitrogen dioxide
+# 9 PM2 µg/m³ Particulate matter  ← PM2.5
+# ...
 
-import canairy.hh as hh
-import polars as pl
-
-
-client = hh.HHClient()
-
-res = client.get_component_data("pm10_1m")
-res = pl.DataFrame(res)
-
-res.plot.line(x='datetime', y='value', color='station').properties(width=800, height=400)
+for s in uba.get_scopes(lang="en").data:
+    print(s.id, s.code, s.name)
+# 1 1TMW Daily average
+# 2 1SMW One hour average
+# ...
 ```
+
+Find stations and filter them:
+
+```python
+from canairy.uba.utils import filter_stations_active, filter_stations_by_network
+
+stations = uba.get_stations(lang="en").data        # ~2,400 stations, incl. closed ones
+networks = uba.get_networks(lang="en").data
+
+hamburg = filter_stations_by_network(stations, networks, "HH")
+running = filter_stations_active(hamburg, "2020-01-01", "2024-12-31")
+```
+
+Other endpoints: `get_networks()` and `get_thresholds(use, component_id, scope_id)`.
+
+### Hamburger Luftmessnetz (HH)
+
+```python
+from datetime import datetime
+
+from canairy.hh import HHClient
+
+hh = HHClient()
+
+# Hourly NO₂ at all Hamburg stations
+data = hh.get_component_data(
+    "no2_1h",
+    timespan="custom",
+    start=datetime(2024, 1, 1, 0),
+    end=datetime(2024, 1, 1, 3),
+)
+for d in data[:2]:
+    print(d.datetime, d.station, d.value)
+# 2024-01-01 03:00:00+01:00 80kt 31.0
+# 2024-01-01 03:00:00+01:00 21bi 11.0
+
+# Data for a single station
+hh.get_station_data(
+    "13ST", period="1h", timespan="custom",
+    start=datetime(2024, 1, 1), end=datetime(2024, 1, 1, 3), core="no2",
+)
+```
+
+Component codes combine a pollutant ("core") and an averaging period, for
+example `no2_1h`, `pm10_24hg` or `pm25_1m`. List them with `get_components()`
+and `get_cores()`. The other endpoints are `get_stations()`, `get_station(code)`
+and `get_thresholds()`.
+
+`canairy.hh.aqi` contains the bins, thresholds and ratings of the German air
+quality index (Luftqualitätsindex) as used by the Hamburg network.
+
+### Working with DataFrames
+
+All results are pydantic models, so they convert easily:
+
+```python
+import polars as pl  # or pandas
+
+df = pl.DataFrame([m.model_dump() for m in res.data])
+```
+
+## Bulk download (`aq-downloader`)
+
+```sh
+aq-downloader <outpath> [-y YEAR_START]
+```
+
+Downloads hourly data for PM10, PM2.5, O₃, NO₂ and SO₂ and 8-hour CO for **every**
+UBA station from `YEAR_START` (default 2016) up to last year. Each result is stored
+as a pickled dict at `<outpath>/<year>/<station_code>/<component>_<scope>.pkl`,
+and progress is logged to `<outpath>/download.log`. Expect this to run for a long
+time.
+
+A Docker image for the downloader lives in [`downloader/`](https://github.com/UKEIAM/de.uke.iam.canairy/tree/develop/downloader).
+
+> **Known issue:** each year is currently requested until 31 December of the *following* year, so
+> files of consecutive years overlap. Deduplicate after loading.
+
+## Good to know
+
+- **Caching:** responses are cached locally, so repeated calls may not hit the API.
+- **UBA**
+  - `get_measures` needs a station; query one station at a time.
+  - The API counts hours 1–24; `canairy` converts to regular 0–23 `datetime`s for you.
+  - Data starts on 2016-01-01.
+- **HH**
+  - Data requests are **silently truncated** to the *latest* 745 hourly values
+    (`1h`, `8hg`) or 365 daily values (`24h`). Request hourly data per month and
+    daily data per half-year.
+  - Times are local (Europe/Berlin); results carry `+01:00`/`+02:00` offsets.
+  - `timespan="all"` on station data only returns the last 12 months.
+  - `get_station_data` fails if the response contains missing values; use
+    `get_component_data` instead.
+
+## Development
+
+```sh
+uv sync                            # install with dev dependencies
+uv run pytest                      # all tests; most call the live APIs
+uv run pytest tests/uba/test_utils.py   # offline tests only
+uv run ruff check src tests
+uv run mypy src
+```
+
+## License
+
+BSD 3-Clause, © 2025 Institut für Angewandte Medizininformatik. See [LICENSE](https://github.com/UKEIAM/de.uke.iam.canairy/blob/develop/LICENSE).
+
+The data itself is provided by the Umweltbundesamt and the Hamburger
+Luftmessnetz under their respective terms of use.
