@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -109,6 +109,29 @@ def test_get_data_splits_aware_start_with_open_end(monkeypatch):
     client._get_data("stations/13ST/data", make_params(start, None), "1h")
     assert len(requests) > 1
     assert requests[-1][0] == datetime(2024, 1, 1)
+
+
+def test_get_data_rejects_end_before_start(monkeypatch):
+    client = HHClient()
+    calls = []
+    monkeypatch.setattr(client, "_get", lambda endpoint, params: calls.append(params))
+    with pytest.raises(ValueError, match="after end"):
+        client._get_data(
+            "stations/13ST/data",
+            make_params(datetime(2025, 3, 2), datetime(2025, 3, 1)),
+            "1h",
+        )
+    assert calls == []
+
+
+def test_get_data_open_range_starting_in_future_is_empty(monkeypatch):
+    client = HHClient()
+    calls = []
+    monkeypatch.setattr(client, "_get", lambda endpoint, params: calls.append(params))
+    start = berlin_now() + timedelta(hours=1)
+    rows = client._get_data("stations/13ST/data", make_params(start, None), "1m")
+    assert rows == []
+    assert calls == []
 
 
 def test_get_data_passes_through_non_custom_timespan(monkeypatch):

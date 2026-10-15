@@ -141,6 +141,12 @@ class HHClient:
         # The API defaults a missing end to its local now; make that explicit
         # so the range gets split.
         range_end = params.end or datetime.now(BERLIN).replace(tzinfo=None)
+        # The API answers an inverted range with no rows, and ignores a start
+        # after its now if end is missing.
+        if params.start > range_end:
+            if params.end is not None:
+                raise ValueError(f"start {params.start} is after end {params.end}")
+            return []
         rows = []
         seen = set()
         # Each response is sorted by datetime, newest first, across all
