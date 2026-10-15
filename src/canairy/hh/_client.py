@@ -116,13 +116,16 @@ class HHClient:
         period: str,
     ) -> list[Any]:
         """Request custom ranges in windows the API does not truncate."""
-        if params.timespan != "custom" or params.start is None or params.end is None:
+        if params.timespan != "custom" or params.start is None:
             return self._get(endpoint, params)
 
+        # The API defaults a missing end to now; make that explicit so the
+        # range gets split.
+        range_end = params.end or datetime.now()
         rows = []
         seen = set()
         # The API returns rows newest first; keep that order across windows.
-        for start, end in reversed(split_range(params.start, params.end, period)):
+        for start, end in reversed(split_range(params.start, range_end, period)):
             window = params.model_copy(update={"start": start, "end": end})
             for row in self._get(endpoint, window):
                 # Consecutive windows share their boundary timestamp.

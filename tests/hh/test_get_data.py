@@ -60,6 +60,24 @@ def test_get_data_keeps_rows_of_other_components(monkeypatch):
     assert len(rows) == 2
 
 
+def test_get_data_splits_open_ended_range_up_to_now(monkeypatch):
+    client = HHClient()
+    requests = []
+
+    def fake_get(endpoint, params):
+        requests.append((params.start, params.end))
+        return []
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    before = datetime.now()
+    client._get_data(
+        "stations/13ST/data", make_params(datetime(2024, 1, 1), None), "1h"
+    )
+    assert len(requests) > 1
+    assert requests[0][1] >= before
+    assert requests[-1][0] == datetime(2024, 1, 1)
+
+
 def test_get_data_passes_through_non_custom_timespan(monkeypatch):
     client = HHClient()
     calls = []
