@@ -135,7 +135,9 @@ class HHClient:
         range_end = params.end or datetime.now()
         rows = []
         seen = set()
-        # The API returns rows newest first; keep that order across windows.
+        # Each response is sorted by datetime, newest first, across all
+        # stations and components, so joining windows newest first keeps a
+        # global order.
         for start, end in reversed(split_range(params.start, range_end, period)):
             window = params.model_copy(update={"start": start, "end": end})
             for row in self._get(endpoint, window):
