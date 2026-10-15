@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import time
 from typing import Any
@@ -30,6 +30,15 @@ __all__ = ["HHClient"]
 
 logger = logging.getLogger(__name__)
 MAX_RETRIES = 8
+
+# The API silently moves a custom start forward to `end - limit` (both ends
+# inclusive, local calendar days). Periods not listed here are not split.
+RANGE_LIMITS: dict[str, timedelta] = {
+    "1h": timedelta(days=31),
+    "8hg": timedelta(days=31),
+    "24hg": timedelta(days=31),
+    "24h": timedelta(days=365),
+}
 
 
 class HHClient:
@@ -150,3 +159,21 @@ def backoff(func, *args, **kwargs) -> Any:   # type: ignore
             timeout = base**i
             time.sleep(timeout)
     raise last_exc
+
+
+def split_range(
+    start: datetime, end: datetime, period: str
+) -> list[tuple[datetime, datetime]]:
+    """Split [start, end] into windows the API returns without truncation.
+
+    Consecutive windows share their boundary timestamp.
+    """
+    limit = RANGE_LIMITS.get(period)
+    if limit is None:
+        return [(start, end)]
+    windows = []
+    while end - start > limit:
+        windows.append((start, start + limit))
+        start += limit
+    windows.append((start, end))
+    return windows
