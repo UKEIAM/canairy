@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import time
-from typing import Any
+from typing import Any, get_args
 import logging
 
 from hishel.httpx import SyncCacheClient
@@ -66,7 +66,10 @@ class HHClient:
         params = HHComponentDataParams(
             stationgroup=stationgroup, timespan=timespan, start=start, end=end
         )
+        # Component codes end in their period (no2_1h -> 1h).
         period = code.rsplit("_", 1)[-1]
+        if period not in get_args(Periods_T):
+            raise ValueError(f"Cannot derive a period from component code {code!r}")
         result = self._get_data(f"components/{code}/data", params, period)
         return HHComponentData.from_response(result)
 

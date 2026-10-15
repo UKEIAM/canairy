@@ -119,3 +119,11 @@ def test_get_data_rejects_range_with_non_custom_timespan(monkeypatch):
             make_params(datetime(2024, 1, 1), None, timespan="lastyear"),
             "1h",
         )
+
+
+@pytest.mark.parametrize("code", ["no2", "no2_1h_x"])
+def test_get_component_data_rejects_unknown_period_suffix(monkeypatch, code):
+    client = HHClient()
+    monkeypatch.setattr(client, "_get", lambda endpoint, params: [])
+    with pytest.raises(ValueError, match="period"):
+        client.get_component_data(code)
