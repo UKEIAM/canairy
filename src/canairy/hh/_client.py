@@ -29,7 +29,6 @@ from ._typing import GroupCodes_T, TimeSpans_T, Periods_T
 __all__ = ["HHClient"]
 
 logger = logging.getLogger(__name__)
-LOG_FMT = "%(levelname)-10s %(message)s"
 MAX_RETRIES = 8
 
 
@@ -112,10 +111,10 @@ class HHClient:
         if (meta.headers.get("Transfer-Encoding") == "chunked") or (
             "content-length" not in meta.headers
         ):
-            logging.debug("Streaming response")
+            logger.debug("Streaming response")
             return backoff(self._stream, self._url(endpoint), params=params_)
 
-        logging.debug("Non-streaming response")
+        logger.debug("Non-streaming response")
         return (
             backoff(self._client.get, self._url(endpoint), params=params_)
             .raise_for_status()
@@ -145,6 +144,6 @@ def backoff(func, *args, **kwargs) -> Any:   # type: ignore
         try:
             return func(*args, **kwargs)
         except httpx.RemoteProtocolError:
-            logging.debug(f"RemoteProtoclolError: retry {i}")
+            logger.debug(f"RemoteProtocolError: retry {i}")
             timeout = base**i
             time.sleep(timeout)
