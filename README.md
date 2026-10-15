@@ -39,7 +39,7 @@ pip install canairy
 uv add canairy
 ```
 
-Requires Python 3.11 or newer.
+Requires Python 3.12 or newer.
 
 > **Note:** `canairy` is pre-1.0. Expect breaking changes between minor versions.
 
