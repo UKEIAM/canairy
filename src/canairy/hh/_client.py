@@ -66,10 +66,10 @@ class HHClient:
         params = HHComponentDataParams(
             stationgroup=stationgroup, timespan=timespan, start=start, end=end
         )
-        # Component codes end in their period (no2_1h -> 1h).
-        period = code.rsplit("_", 1)[-1]
-        if not _is_period(period):
-            raise ValueError(f"Cannot derive a period from component code {code!r}")
+        # Component codes end in their period (no2_1h -> 1h); the API ignores
+        # their case.
+        suffix = code.rsplit("_", 1)[-1].lower()
+        period = suffix if _is_period(suffix) else None
         result = self._get_data(f"components/{code}/data", params, period)
         return HHComponentData.from_response(result)
 
@@ -116,9 +116,12 @@ class HHClient:
         self,
         endpoint: str,
         params: HHComponentDataParams | HHStationDataParams,
-        period: Periods_T,
+        period: Periods_T | None,
     ) -> list[Any]:
-        """Request custom ranges in windows the API does not truncate."""
+        """Request custom ranges in windows the API does not truncate.
+
+        `period` selects the window size; it is only needed for custom ranges.
+        """
         # The API ignores start/end unless timespan is "custom".
         if params.start is not None or params.end is not None:
             if params.timespan is None:
@@ -129,6 +132,10 @@ class HHClient:
                 )
         if params.timespan != "custom" or params.start is None:
             return self._get(endpoint, params)
+        if period is None:
+            raise ValueError(
+                f"Cannot split a custom range of {endpoint!r}: unknown period"
+            )
 
         # The API defaults a missing end to now; make that explicit so the
         # range gets split.

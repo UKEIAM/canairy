@@ -122,8 +122,37 @@ def test_get_data_rejects_range_with_non_custom_timespan(monkeypatch):
 
 
 @pytest.mark.parametrize("code", ["no2", "no2_1h_x"])
-def test_get_component_data_rejects_unknown_period_suffix(monkeypatch, code):
+def test_get_component_data_rejects_custom_range_without_period(monkeypatch, code):
     client = HHClient()
     monkeypatch.setattr(client, "_get", lambda endpoint, params: [])
     with pytest.raises(ValueError, match="period"):
-        client.get_component_data(code)
+        client.get_component_data(code, start=datetime(2024, 1, 1))
+
+
+@pytest.mark.parametrize("code", ["no2", "no2_1h_x"])
+def test_get_component_data_without_range_needs_no_period(monkeypatch, code):
+    client = HHClient()
+    calls = []
+
+    def fake_get(endpoint, params):
+        calls.append(params)
+        return []
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    client.get_component_data(code, timespan="lastday")
+    assert len(calls) == 1
+
+
+def test_get_component_data_period_suffix_ignores_case(monkeypatch):
+    client = HHClient()
+    calls = []
+
+    def fake_get(endpoint, params):
+        calls.append(params)
+        return []
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    client.get_component_data(
+        "NO2_1H", start=datetime(2024, 1, 1), end=datetime(2024, 12, 31)
+    )
+    assert len(calls) > 1
