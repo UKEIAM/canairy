@@ -1,5 +1,5 @@
 import itertools
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -89,7 +89,8 @@ def test_get_station_data_long_range_is_not_truncated(client):
     timestamps = [item.datetime for item in res if item.component == "no2_1h"]
     assert timestamps[0].replace(tzinfo=None) == end
     assert timestamps[-1].replace(tzinfo=None) == start
-    assert timestamps == sorted(set(timestamps), reverse=True)
+    # Every hour once, newest first; aware differences stay 1 h across DST.
+    assert all(a - b == timedelta(hours=1) for a, b in itertools.pairwise(timestamps))
 
 
 def test_get_component_data_long_range_is_not_truncated(client):
@@ -98,8 +99,8 @@ def test_get_component_data_long_range_is_not_truncated(client):
         "pm10_24h", timespan="custom", start=start, end=end
     )
     timestamps = sorted({item.datetime.replace(tzinfo=None) for item in res})
-    assert timestamps[0] == start
-    assert timestamps[-1] == end
+    days = (end - start).days + 1
+    assert timestamps == [start + timedelta(days=i) for i in range(days)]
 
 
 @pytest.fixture
