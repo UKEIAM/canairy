@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import time
-from typing import Any, get_args
+from typing import Any, TypeGuard, get_args
 import logging
 
 from hishel.httpx import SyncCacheClient
@@ -30,7 +30,7 @@ MAX_RETRIES = 8
 
 # The API silently moves a custom start forward to `end - limit` (both ends
 # inclusive, local calendar days). Periods not listed here are not split.
-RANGE_LIMITS: dict[str, timedelta] = {
+RANGE_LIMITS: dict[Periods_T, timedelta] = {
     "1h": timedelta(days=31),
     "8hg": timedelta(days=31),
     "24hg": timedelta(days=31),
@@ -68,7 +68,7 @@ class HHClient:
         )
         # Component codes end in their period (no2_1h -> 1h).
         period = code.rsplit("_", 1)[-1]
-        if period not in get_args(Periods_T):
+        if not _is_period(period):
             raise ValueError(f"Cannot derive a period from component code {code!r}")
         result = self._get_data(f"components/{code}/data", params, period)
         return HHComponentData.from_response(result)
@@ -116,7 +116,7 @@ class HHClient:
         self,
         endpoint: str,
         params: HHComponentDataParams | HHStationDataParams,
-        period: str,
+        period: Periods_T,
     ) -> list[Any]:
         """Request custom ranges in windows the API does not truncate."""
         # The API ignores start/end unless timespan is "custom".
@@ -175,8 +175,12 @@ def backoff(func, *args, **kwargs) -> Any:   # type: ignore
     return func(*args, **kwargs)
 
 
+def _is_period(value: str) -> TypeGuard[Periods_T]:
+    return value in get_args(Periods_T)
+
+
 def split_range(
-    start: datetime, end: datetime, period: str
+    start: datetime, end: datetime, period: Periods_T
 ) -> list[tuple[datetime, datetime]]:
     """Split [start, end] into windows the API returns without truncation.
 
