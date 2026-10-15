@@ -180,8 +180,8 @@ def backoff(func, *args, **kwargs) -> Any:   # type: ignore
         except httpx.RemoteProtocolError as exc:
             last_exc = exc
             logger.debug(f"RemoteProtocolError: retry {i}")
-            timeout = base**i
-            time.sleep(timeout)
+            if i < MAX_RETRIES:
+                time.sleep(base**i)
     raise last_exc
 
 
