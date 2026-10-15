@@ -122,17 +122,15 @@ class UBAClient:
 
 def backoff(func, *args, **kwargs) -> Any:  # type: ignore
     base = 2
-    last_exc: Exception
-    for i in range(1, MAX_RETRIES + 1):
+    for i in range(1, MAX_RETRIES):
         try:
             return func(*args, **kwargs).raise_for_status()
-        except httpx.RemoteProtocolError as exc:
-            last_exc = exc
+        except httpx.RemoteProtocolError:
             logger.debug(f"RemoteProtocolError: retry {i}")
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code < 500 and exc.response.status_code != 429:
                 raise
-            last_exc = exc
             logger.debug(f"HTTPStatusError {exc.response.status_code}: retry {i}")
         time.sleep(base**i)
-    raise last_exc
+    # The last attempt (the only one if MAX_RETRIES <= 1) raises its error.
+    return func(*args, **kwargs).raise_for_status()

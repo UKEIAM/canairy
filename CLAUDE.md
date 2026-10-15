@@ -25,7 +25,7 @@ uv run mypy src                           # type check (pydantic mypy plugin ena
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/hh/test_hh_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py` and the other `tests/hh/test_*.py` files are offline.
+Tests in `tests/hh/test_hh_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py`, `tests/uba/test_backoff.py` and the other `tests/hh/test_*.py` files are offline.
 
 ## Architecture
 
