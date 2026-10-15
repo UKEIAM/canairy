@@ -177,7 +177,9 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
     `1h`, `8hg` and `24hg` and the latest 365 days for `24h`. With
     `timespan="custom"`, `get_station_data` and `get_component_data` split
     longer ranges into several requests and join the results, so a year of hourly
-    data costs about 12 requests. Other timespans are not split.
+    data costs about 12 requests. A missing `end` means now. Other timespans are
+    not split, and passing `start`/`end` with them raises `ValueError`;
+    `get_component_data` treats `start`/`end` without a timespan as custom.
   - Rows come newest first.
   - Times are local (Europe/Berlin); results carry `+01:00`/`+02:00` offsets.
   - `timespan="all"` on station data only returns the last 12 months.

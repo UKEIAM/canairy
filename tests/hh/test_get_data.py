@@ -1,7 +1,9 @@
 from datetime import datetime
 
+import pytest
+
 from canairy.hh import HHClient
-from canairy.hh._models import HHStationDataParams
+from canairy.hh._models import HHComponentDataParams, HHStationDataParams
 
 
 def make_row(dt, component="no2_1h"):
@@ -91,3 +93,29 @@ def test_get_data_passes_through_non_custom_timespan(monkeypatch):
         "stations/13ST/data", make_params(None, None, timespan="lastyear"), "1h"
     )
     assert len(calls) == 1
+
+
+def test_get_data_treats_range_without_timespan_as_custom(monkeypatch):
+    client = HHClient()
+    calls = []
+
+    def fake_get(endpoint, params):
+        calls.append(params)
+        return []
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    params = HHComponentDataParams(start=datetime(2024, 1, 1), end=datetime(2024, 12, 31))
+    client._get_data("components/no2_1h/data", params, "1h")
+    assert len(calls) > 1
+    assert all(call.timespan == "custom" for call in calls)
+
+
+def test_get_data_rejects_range_with_non_custom_timespan(monkeypatch):
+    client = HHClient()
+    monkeypatch.setattr(client, "_get", lambda endpoint, params: [])
+    with pytest.raises(ValueError, match="custom"):
+        client._get_data(
+            "stations/13ST/data",
+            make_params(datetime(2024, 1, 1), None, timespan="lastyear"),
+            "1h",
+        )

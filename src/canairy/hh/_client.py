@@ -116,6 +116,14 @@ class HHClient:
         period: str,
     ) -> list[Any]:
         """Request custom ranges in windows the API does not truncate."""
+        # The API ignores start/end unless timespan is "custom".
+        if params.start is not None or params.end is not None:
+            if params.timespan is None:
+                params = params.model_copy(update={"timespan": "custom"})
+            elif params.timespan != "custom":
+                raise ValueError(
+                    f'start/end require timespan="custom", got {params.timespan!r}'
+                )
         if params.timespan != "custom" or params.start is None:
             return self._get(endpoint, params)
 
