@@ -92,7 +92,7 @@ class HHStationData(ItemListModel):
     core: str
     component: str
     period: Periods_T
-    value: int
+    value: float | None
 
 
 class HHComponentDataParams(DatetimeRangeParams):

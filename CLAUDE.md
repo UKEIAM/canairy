@@ -43,7 +43,6 @@ HH (Hamburg) specifics:
 - Datetimes are serialized as `%d.%m.%Y %H:%M` and interpreted as local time; responses carry `+01:00`/`+02:00` offsets.
 - **Silent truncation:** a data request returns at most 745 timestamps for hourly-resolution periods (`1h`, `8hg`) and 365 for daily (`24h`), with HTTP 200, keeping the *latest* part of the range. Request hourly data per month, daily data per half-year.
 - Hourly/daily data start 2012-01-01; `*_1m` monthly means go back to 1984. `timespan="all"` on station data returns only the last 12 months.
-- `HHStationData.value` is typed `int` and fails on `null` values (`HHComponentData.value` is `float | None`).
 - `aqi.py` contains static German AQI bins/thresholds/ratings, not API calls.
 
 UBA specifics:

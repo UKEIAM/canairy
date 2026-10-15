@@ -70,6 +70,17 @@ def test_get_station_data(client):
     assert all(isinstance(item, HHStationData) for item in res)
 
 
+def test_get_station_data_with_missing_values(client):
+    res = client.get_station_data(
+        "13ST",
+        period="1h",
+        timespan="custom",
+        start=datetime(2025, 1, 1),
+        end=datetime(2025, 1, 31, 23),
+    )
+    assert any(item.value is None for item in res)
+
+
 @pytest.fixture
 def client():
     return HHClient()

@@ -178,8 +178,6 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
     daily data per half-year.
   - Times are local (Europe/Berlin); results carry `+01:00`/`+02:00` offsets.
   - `timespan="all"` on station data only returns the last 12 months.
-  - `get_station_data` fails if the response contains missing values; use
-    `get_component_data` instead.
 
 ## Development
 
