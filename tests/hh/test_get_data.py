@@ -95,6 +95,22 @@ def test_get_data_splits_open_ended_range_up_to_now_in_berlin(monkeypatch, utc_h
     assert requests[-1][0] == datetime(2024, 1, 1)
 
 
+def test_get_data_splits_aware_start_with_open_end(monkeypatch):
+    client = HHClient()
+    requests = []
+
+    def fake_get(endpoint, params):
+        requests.append((params.start, params.end))
+        return []
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    # e.g. the newest timestamp of a previous response
+    start = datetime.fromisoformat("2024-01-01T00:00:00+01:00")
+    client._get_data("stations/13ST/data", make_params(start, None), "1h")
+    assert len(requests) > 1
+    assert requests[-1][0] == datetime(2024, 1, 1)
+
+
 def test_get_data_passes_through_non_custom_timespan(monkeypatch):
     client = HHClient()
     calls = []

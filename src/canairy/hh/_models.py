@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated, Any, Self
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, field_serializer, Field
+from pydantic import BaseModel, field_serializer, field_validator, Field
 
 from ._typing import GroupCodes_T, Periods_T, TimeSpans_T, StationGroup_T
 
@@ -57,6 +57,14 @@ class HHThreshold(ItemListModel):
 class DatetimeRangeParams(BaseParams):
     start: datetime | None = None
     end: datetime | None = None
+
+    @field_validator("start", "end")
+    @classmethod
+    def to_local(cls, dt: datetime | None) -> datetime | None:
+        """Convert aware datetimes to naive Berlin time; naive ones already are."""
+        if dt is not None and dt.tzinfo is not None:
+            return dt.astimezone(BERLIN).replace(tzinfo=None)
+        return dt
 
     @field_serializer("start", "end")
     def custom_dt(self, dt: datetime) -> str:
