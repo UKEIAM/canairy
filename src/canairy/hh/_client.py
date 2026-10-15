@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import json
 import time
 from typing import Any
 import logging
@@ -7,8 +6,6 @@ import logging
 from hishel.httpx import SyncCacheClient
 import httpx
 from ratelimit import limits, sleep_and_retry
-
-from httpx._types import QueryParamTypes
 
 from ._models import (
     BaseParams,
@@ -139,32 +136,11 @@ class HHClient:
     @limits(120, period=60)
     def _get(self, endpoint: str, params: BaseParams | None = None) -> Any:
         params_ = params.model_dump(exclude_none=True) if params else None
-        meta = self._client.head(self._url(endpoint), params=params_).raise_for_status()
-
-        if (meta.headers.get("Transfer-Encoding") == "chunked") or (
-            "content-length" not in meta.headers
-        ):
-            logger.debug("Streaming response")
-            return backoff(self._stream, self._url(endpoint), params=params_)
-
-        logger.debug("Non-streaming response")
         return (
             backoff(self._client.get, self._url(endpoint), params=params_)
             .raise_for_status()
             .json()
         )
-
-    def _stream(
-        self,
-        endpoint: str,
-        *,
-        params: QueryParamTypes | None = None,
-        method: str = "GET",
-    ) -> Any:
-        with self._client.stream(method, endpoint, params=params) as stream:
-            stream.raise_for_status()
-            buff = json.loads("".join(data for data in stream.iter_text()))
-        return buff
 
     def _url(self, endpoint: str) -> str:
         return f"{HHClient.BASE_URL}/{endpoint}"
