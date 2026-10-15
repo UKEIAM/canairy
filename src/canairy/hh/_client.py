@@ -165,16 +165,14 @@ class HHClient:
 
 def backoff(func, *args, **kwargs) -> Any:   # type: ignore
     base = 2
-    last_exc: Exception
-    for i in range(1, MAX_RETRIES + 1):
+    for i in range(1, MAX_RETRIES):
         try:
             return func(*args, **kwargs)
-        except httpx.RemoteProtocolError as exc:
-            last_exc = exc
+        except httpx.RemoteProtocolError:
             logger.debug(f"RemoteProtocolError: retry {i}")
-            if i < MAX_RETRIES:
-                time.sleep(base**i)
-    raise last_exc
+            time.sleep(base**i)
+    # The last attempt (the only one if MAX_RETRIES <= 1) raises its error.
+    return func(*args, **kwargs)
 
 
 def split_range(

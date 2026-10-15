@@ -44,6 +44,18 @@ def test_backoff_does_not_sleep_after_last_attempt(sleeps):
     assert sleeps == [2**i for i in range(1, MAX_RETRIES)]
 
 
+@pytest.mark.parametrize("max_retries", [0, 1])
+def test_backoff_without_retries_makes_one_attempt(monkeypatch, sleeps, max_retries):
+    monkeypatch.setattr(_client, "MAX_RETRIES", max_retries)
+    func, calls = make_flaky(0)
+    assert backoff(func) == "ok"
+    func, calls = make_flaky(1)
+    with pytest.raises(httpx.RemoteProtocolError):
+        backoff(func)
+    assert len(calls) == 1
+    assert sleeps == []
+
+
 def test_backoff_does_not_retry_other_errors():
     def func():
         raise httpx.ConnectError("refused")
