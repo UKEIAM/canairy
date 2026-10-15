@@ -1,6 +1,22 @@
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
+from canairy.hh import HHComponentData, HHStationData
 from canairy.hh._models import BERLIN, HHComponentDataParams
+
+
+@pytest.mark.parametrize("model", [HHStationData, HHComponentData])
+def test_data_rows_accept_null_and_float_values(model):
+    row = {
+        "datetime": "2025-01-01T01:00:00+01:00",
+        "station": "13ST",
+        "core": "no2",
+        "component": "no2_1h",
+        "period": "1h",
+    }
+    res = model.from_response([{**row, "value": None}, {**row, "value": 12.5}])
+    assert [item.value for item in res] == [None, 12.5]
 
 
 def test_aware_range_is_converted_to_naive_berlin_time():
