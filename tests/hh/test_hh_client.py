@@ -3,8 +3,8 @@ from datetime import datetime
 
 import pytest
 
-from canairy.hh import HHClient
-from canairy.hh._models import (
+from canairy.hh import (
+    HHClient,
     HHCore,
     HHStation,
     HHStationData,
