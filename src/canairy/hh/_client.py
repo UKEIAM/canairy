@@ -140,10 +140,13 @@ class HHClient:
 
 def backoff(func, *args, **kwargs) -> Any:   # type: ignore
     base = 2
+    last_exc: Exception
     for i in range(1, MAX_RETRIES + 1):
         try:
             return func(*args, **kwargs)
-        except httpx.RemoteProtocolError:
+        except httpx.RemoteProtocolError as exc:
+            last_exc = exc
             logger.debug(f"RemoteProtocolError: retry {i}")
             timeout = base**i
             time.sleep(timeout)
+    raise last_exc
