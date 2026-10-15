@@ -1,8 +1,6 @@
 #! /bin/zsh
 set -e
-PROJECT_PATH=$(git rev-parse --show-toplevel)
-PROJECT_NAME=${PROJECT_PATH:t}
-REPO="${PROJECT_NAME}_downloader"
+REPO="canairy_downloader"
 TAG="latest"
 
 

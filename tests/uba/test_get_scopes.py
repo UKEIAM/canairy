@@ -1,7 +1,7 @@
 import pytest
 
-from air_pollution.uba import UBAClient
-from air_pollution.uba.scopes import UBAScopesGetResponse
+from canairy.uba import UBAClient
+from canairy.uba.scopes import UBAScopesGetResponse
 
 
 def test_get_scopes(client):

@@ -1,7 +1,7 @@
 import pytest
 
-from air_pollution.uba import UBAClient
-from air_pollution.uba.thresholds import UBAThresholdsGetResponse
+from canairy.uba import UBAClient
+from canairy.uba.thresholds import UBAThresholdsGetResponse
 
 
 def test_get_thresholds_use(client):

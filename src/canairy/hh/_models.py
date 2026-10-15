@@ -1,9 +1,13 @@
 from datetime import datetime
 from typing import Annotated, Any, Self
+from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, field_serializer, Field
+from pydantic import BaseModel, field_serializer, field_validator, Field
 
 from ._typing import GroupCodes_T, Periods_T, TimeSpans_T, StationGroup_T
+
+# The API reads request datetimes as local Hamburg time.
+BERLIN = ZoneInfo("Europe/Berlin")
 
 
 class BaseParams(BaseModel):
@@ -15,7 +19,7 @@ class _ActiveParam(BaseParams):
 class _HiddenParam(BaseParams):
     include_hidden: bool | None = None
 
-class ListParams(_ActiveParam, _HiddenParam):
+class HHListParams(_ActiveParam, _HiddenParam):
     pass
 
 class ItemListModel(BaseParams):
@@ -25,7 +29,7 @@ class ItemListModel(BaseParams):
 
 
 
-class Core(ItemListModel):
+class HHCore(ItemListModel):
     code: str
     active: bool
     group: StationGroup_T
@@ -38,7 +42,7 @@ class Core(ItemListModel):
     components: list[str]
 
 
-class Threshold(ItemListModel):
+class HHThreshold(ItemListModel):
     active: bool
     code: str
     component: str
@@ -54,16 +58,24 @@ class DatetimeRangeParams(BaseParams):
     start: datetime | None = None
     end: datetime | None = None
 
+    @field_validator("start", "end")
+    @classmethod
+    def to_local(cls, dt: datetime | None) -> datetime | None:
+        """Convert aware datetimes to naive Berlin time; naive ones already are."""
+        if dt is not None and dt.tzinfo is not None:
+            return dt.astimezone(BERLIN).replace(tzinfo=None)
+        return dt
+
     @field_serializer("start", "end")
     def custom_dt(self, dt: datetime) -> str:
         return dt.strftime("%d.%m.%Y %H:%M")
 
 
-class ComponentParams(_ActiveParam):
+class HHComponentParams(_ActiveParam):
     group_code: GroupCodes_T | None
 
 
-class Station(ItemListModel):
+class HHStation(ItemListModel):
     name: str
     code: str
     code_eu: Annotated[str, Field(validation_alias="codeEu")]
@@ -86,21 +98,7 @@ class Station(ItemListModel):
     exceeds: list[str]
 
 
-class StationData(ItemListModel):
-    datetime: datetime
-    station: str
-    core: str
-    component: str
-    period: Periods_T
-    value: int
-
-
-class ComponentDataParams(DatetimeRangeParams):
-    stationgroup: str | None = None
-    timespan: TimeSpans_T | None = None
-
-
-class ComponentData(ItemListModel):
+class HHStationData(ItemListModel):
     datetime: datetime
     station: str
     core: str
@@ -109,7 +107,21 @@ class ComponentData(ItemListModel):
     value: float | None
 
 
-class Component(ItemListModel):
+class HHComponentDataParams(DatetimeRangeParams):
+    stationgroup: str | None = None
+    timespan: TimeSpans_T | None = None
+
+
+class HHComponentData(ItemListModel):
+    datetime: datetime
+    station: str
+    core: str
+    component: str
+    period: Periods_T
+    value: float | None
+
+
+class HHComponent(ItemListModel):
     code: str
     core: str
     period: str
@@ -120,7 +132,7 @@ class Component(ItemListModel):
     decimal_points: Annotated[int, Field(validation_alias="decimalPoints")]
 
 
-class StationDataParams(DatetimeRangeParams):
+class HHStationDataParams(DatetimeRangeParams):
     period: Periods_T
     timespan: TimeSpans_T
     core: str | None

@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from air_pollution.uba import UBAClient
-from air_pollution.uba.measures._models import UBAMeasuresGetResponse
+from canairy.uba import UBAClient
+from canairy.uba.measures._models import UBAMeasuresGetResponse
 
 
 def test_get_measures(client):

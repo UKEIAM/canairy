@@ -1,7 +1,7 @@
 [project]
-name = "air-pollution"
-version = "0.2.2"
-description = "Air pollution data collector"
+name = "canairy"
+version = "0.3.0"
+description = "Client for German public air-quality APIs (UBA, Hamburger Luftmessnetz)"
 readme = "README.md"
 authors = [
     { name = "Michael Blaß", email = "m.blass@uke.de" }
@@ -9,7 +9,6 @@ authors = [
 
 classifiers = [
     "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -22,13 +21,13 @@ classifiers = [
     "Intended Audience :: Science/Research"
 ]
 
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "hishel>=1.0",
-    "httpx-limiter>=0.2.0",
     "httpx>=0.28.1",
     "pydantic>=2.11.3",
     "ratelimit>=2.2.1",
+    "tzdata>=2026.5",
 ]
 
 [dependency-groups]
@@ -45,7 +44,11 @@ build-backend = "setuptools.build_meta"
 
 
 [project.scripts]
-aq-downloader = "air_pollution.scripts.downloader:main"
+aq-downloader = "canairy.scripts.downloader:main"
+
+[project.urls]
+Repository = "https://github.com/UKEIAM/canairy"
+Changelog = "https://github.com/UKEIAM/canairy/releases"
 
 [[tool.mypy.overrides]]
 module = "ratelimit"
@@ -53,6 +56,8 @@ ignore_missing_imports = true
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
+# Check against the oldest supported Python, not the one running mypy.
+python_version = "3.12"
 
 [tool.ruff.lint]
 extend-select = ["B"]
