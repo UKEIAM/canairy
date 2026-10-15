@@ -46,6 +46,10 @@ build-backend = "setuptools.build_meta"
 [project.scripts]
 aq-downloader = "canairy.scripts.downloader:main"
 
+[project.urls]
+Repository = "https://github.com/UKEIAM/canairy"
+Changelog = "https://github.com/UKEIAM/canairy/releases"
+
 [[tool.mypy.overrides]]
 module = "ratelimit"
 ignore_missing_imports = true
