@@ -24,7 +24,6 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = [
     "hishel>=1.0",
-    "httpx-limiter>=0.2.0",
     "httpx>=0.28.1",
     "pydantic>=2.11.3",
     "ratelimit>=2.2.1",
