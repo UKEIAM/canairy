@@ -17,8 +17,8 @@ Dependencies are managed with `uv` (`uv.lock` is committed; dev tools are in the
 
 ```sh
 uv sync                                   # install incl. dev group
-uv run pytest                             # all tests (most hit the live APIs)
-uv run pytest tests/uba/test_utils.py                # offline unit tests only
+uv run pytest                             # all tests, incl. live API integration tests
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
 uv run pytest tests/uba/test_get_measures.py::<name>  # single test
 uv run ruff check src tests               # lint
 uv run mypy src                           # type check (pydantic mypy plugin enabled)

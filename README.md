@@ -1,13 +1,13 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/UKEIAM/de.uke.iam.canairy/develop/docs/assets/logo-dark.svg">
-    <img src="https://raw.githubusercontent.com/UKEIAM/de.uke.iam.canairy/develop/docs/assets/logo-light.svg" alt="canairy" width="420">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/UKEIAM/canairy/develop/docs/assets/logo-dark.svg">
+    <img src="https://raw.githubusercontent.com/UKEIAM/canairy/develop/docs/assets/logo-light.svg" alt="canairy" width="420">
   </picture>
 </h1>
 
 [![PyPI](https://img.shields.io/pypi/v/canairy)](https://pypi.org/project/canairy/)
 [![Python](https://img.shields.io/pypi/pyversions/canairy)](https://pypi.org/project/canairy/)
-[![License](https://img.shields.io/pypi/l/canairy)](https://github.com/UKEIAM/de.uke.iam.canairy/blob/develop/LICENSE)
+[![License](https://img.shields.io/pypi/l/canairy)](https://github.com/UKEIAM/canairy/blob/develop/LICENSE)
 
 Typed Python clients for public German air-quality APIs.
 
@@ -160,14 +160,16 @@ as a pickled dict at `<outpath>/<year>/<station_code>/<component>_<scope>.pkl`,
 and progress is logged to `<outpath>/download.log`. Expect this to run for a long
 time.
 
-A Docker image for the downloader lives in [`downloader/`](https://github.com/UKEIAM/de.uke.iam.canairy/tree/develop/downloader).
+A Docker image for the downloader lives in [`downloader/`](https://github.com/UKEIAM/canairy/tree/develop/downloader).
 
 > **Known issue:** each year is currently requested until 31 December of the *following* year, so
 > files of consecutive years overlap. Deduplicate after loading.
 
 ## Good to know
 
-- **Caching:** responses are cached locally, so repeated calls may not hit the API.
+- **Caching:** responses are cached in `.cache/hishel/` under the current working
+  directory for as long as the servers allow: 5 minutes for HH and 3 hours for
+  UBA, measurements included. Repeated calls within that time don't hit the API.
 - **UBA**
   - `get_measures` needs a station; query one station at a time.
   - The API counts hours 1–24; `canairy` converts to regular 0–23 `datetime`s for you.
@@ -177,26 +179,32 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
     `1h`, `8hg` and `24hg` and the latest 365 days for `24h`. With
     `timespan="custom"`, `get_station_data` and `get_component_data` split
     longer ranges into several requests and join the results, so a year of hourly
-    data costs about 12 requests. A missing `end` means now. Other timespans are
-    not split, and passing `start`/`end` with them raises `ValueError`;
-    `get_component_data` treats `start`/`end` without a timespan as custom.
+    data costs about 12 requests. Other timespans are not split, and passing
+    `start`/`end` with them raises `ValueError`; `get_component_data` treats
+    `start`/`end` without a timespan as custom.
+  - A missing `end` means now in Hamburg. A `start` after `end` raises
+    `ValueError`; an open range that starts in the future returns `[]`.
+  - Times are local (Europe/Berlin). Naive `start`/`end` are taken as Hamburg
+    time and aware ones are converted, so a timestamp from a previous result can
+    be passed back as is. Results carry `+01:00`/`+02:00` offsets.
   - Rows come newest first.
-  - Times are local (Europe/Berlin); results carry `+01:00`/`+02:00` offsets.
   - `timespan="all"` on station data only returns the last 12 months.
 
 ## Development
 
 ```sh
 uv sync                            # install with dev dependencies
-uv run pytest                      # all tests; most call the live APIs
-uv run pytest tests/uba/test_utils.py   # offline tests only
+uv run pytest                      # all tests, including live API calls
 uv run ruff check src tests
 uv run mypy src
+
+# offline tests only
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore-glob='tests/uba/test_get_*.py'
 ```
 
 ## License
 
-BSD 3-Clause, © 2025 Institut für Angewandte Medizininformatik. See [LICENSE](https://github.com/UKEIAM/de.uke.iam.canairy/blob/develop/LICENSE).
+BSD 3-Clause, © 2025 Institut für Angewandte Medizininformatik. See [LICENSE](https://github.com/UKEIAM/canairy/blob/develop/LICENSE).
 
 The data itself is provided by the Umweltbundesamt and the Hamburger
 Luftmessnetz under their respective terms of use.
