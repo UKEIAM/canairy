@@ -69,7 +69,8 @@ class HHClient:
         params = HHComponentDataParams(
             stationgroup=stationgroup, timespan=timespan, start=start, end=end
         )
-        result = self._get(f"components/{code}/data", params)
+        period = code.rsplit("_", 1)[-1]
+        result = self._get_data(f"components/{code}/data", params, period)
         return HHComponentData.from_response(result)
 
     def get_cores(self) -> list[HHCore]:
@@ -108,8 +109,31 @@ class HHClient:
             period=period, timespan=timespan, start=start, end=end, core=core
         )
         return HHStationData.from_response(
-            self._get(f"stations/{station_code}/data", params)
+            self._get_data(f"stations/{station_code}/data", params, period)
         )
+
+    def _get_data(
+        self,
+        endpoint: str,
+        params: HHComponentDataParams | HHStationDataParams,
+        period: str,
+    ) -> list[Any]:
+        """Request custom ranges in windows the API does not truncate."""
+        if params.timespan != "custom" or params.start is None or params.end is None:
+            return self._get(endpoint, params)
+
+        rows = []
+        seen = set()
+        # The API returns rows newest first; keep that order across windows.
+        for start, end in reversed(split_range(params.start, params.end, period)):
+            window = params.model_copy(update={"start": start, "end": end})
+            for row in self._get(endpoint, window):
+                # Consecutive windows share their boundary timestamp.
+                key = (row["datetime"], row["station"], row["component"])
+                if key not in seen:
+                    seen.add(key)
+                    rows.append(row)
+        return rows
 
     @sleep_and_retry
     @limits(120, period=60)

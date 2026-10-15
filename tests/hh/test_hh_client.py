@@ -81,6 +81,27 @@ def test_get_station_data_with_missing_values(client):
     assert any(item.value is None for item in res)
 
 
+def test_get_station_data_long_range_is_not_truncated(client):
+    start, end = datetime(2025, 1, 1), datetime(2025, 3, 31, 23)
+    res = client.get_station_data(
+        "13ST", period="1h", timespan="custom", start=start, end=end, core="no2"
+    )
+    timestamps = [item.datetime for item in res if item.component == "no2_1h"]
+    assert timestamps[0].replace(tzinfo=None) == end
+    assert timestamps[-1].replace(tzinfo=None) == start
+    assert timestamps == sorted(set(timestamps), reverse=True)
+
+
+def test_get_component_data_long_range_is_not_truncated(client):
+    start, end = datetime(2024, 1, 1), datetime(2025, 6, 30)
+    res = client.get_component_data(
+        "pm10_24h", timespan="custom", start=start, end=end
+    )
+    timestamps = sorted({item.datetime.replace(tzinfo=None) for item in res})
+    assert timestamps[0] == start
+    assert timestamps[-1] == end
+
+
 @pytest.fixture
 def client():
     return HHClient()

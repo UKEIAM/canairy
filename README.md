@@ -173,9 +173,12 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
   - The API counts hours 1–24; `canairy` converts to regular 0–23 `datetime`s for you.
   - Data starts on 2016-01-01.
 - **HH**
-  - Data requests are **silently truncated** to the *latest* 745 hourly values
-    (`1h`, `8hg`) or 365 daily values (`24h`). Request hourly data per month and
-    daily data per half-year.
+  - The API silently shortens long ranges, keeping the *latest* 31 days for
+    `1h`, `8hg` and `24hg` and the latest 365 days for `24h`. With
+    `timespan="custom"`, `get_station_data` and `get_component_data` split
+    longer ranges into several requests and join the results, so a year of hourly
+    data costs about 12 requests. Other timespans are not split.
+  - Rows come newest first.
   - Times are local (Europe/Berlin); results carry `+01:00`/`+02:00` offsets.
   - `timespan="all"` on station data only returns the last 12 months.
 

@@ -25,7 +25,7 @@ uv run mypy src                           # type check (pydantic mypy plugin ena
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/hh/test_hh_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py` and `tests/hh/test_backoff.py` are offline.
+Tests in `tests/hh/test_hh_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py` and the other `tests/hh/test_*.py` files are offline.
 
 ## Architecture
 
@@ -41,7 +41,8 @@ HH (Hamburg) specifics:
 - `_get` issues a HEAD first and switches to streaming when the response is chunked / lacks content-length (the data endpoints stream; every call costs two requests).
 - `backoff()` retries only `httpx.RemoteProtocolError` and re-raises the last error once retries are exhausted.
 - Datetimes are serialized as `%d.%m.%Y %H:%M` and interpreted as local time; responses carry `+01:00`/`+02:00` offsets.
-- **Silent truncation:** a data request returns at most 745 timestamps for hourly-resolution periods (`1h`, `8hg`) and 365 for daily (`24h`), with HTTP 200, keeping the *latest* part of the range. Request hourly data per month, daily data per half-year.
+- **Silent truncation:** the API moves a custom `start` forward to `end - 31 days` for `1h`, `8hg`, `24hg` and `end - 365 days` for `24h` (local calendar days, both ends inclusive, so usually 745/366 timestamps), with HTTP 200 and no hint in the response. The spec at `/api/doc` only mentions "1 month" for `1h`/`24hg` and "1 year" for `24h`; `8hg` and the exact day counts were measured. `RANGE_LIMITS` and `split_range` in `_client.py` encode this; `_get_data` requests custom ranges window by window (newest first) and drops the boundary row the windows share, keyed on `(datetime, station, component)`. For `get_component_data` the period comes from the code suffix (`pm10_1h` → `1h`). Non-custom timespans (`lastyear`, `all`, …) are passed through unsplit and have not been probed for limits; neither have `1m`/`1y`/`*aot40`.
+- Data rows come newest first.
 - Hourly/daily data start 2012-01-01; `*_1m` monthly means go back to 1984. `timespan="all"` on station data returns only the last 12 months.
 - `aqi.py` contains static German AQI bins/thresholds/ratings, not API calls.
 
