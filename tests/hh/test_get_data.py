@@ -52,16 +52,21 @@ def test_get_data_keeps_rows_of_other_components(monkeypatch):
     client = HHClient()
 
     def fake_get(endpoint, params):
-        ts = params.end.isoformat()
-        return [make_row(ts, "no2_1h"), make_row(ts, "no_1h")]
+        return [
+            make_row(dt.isoformat(), component)
+            for dt in (params.end, params.start)
+            for component in ("no2_1h", "no_1h")
+        ]
 
     monkeypatch.setattr(client, "_get", fake_get)
     rows = client._get_data(
         "stations/13ST/data",
-        make_params(datetime(2025, 1, 1), datetime(2025, 1, 2)),
+        make_params(datetime(2025, 1, 1), datetime(2025, 3, 15)),
         "1h",
     )
-    assert len(rows) == 2
+    # 3 windows share 2 boundaries: 4 timestamps x 2 components
+    assert len(rows) == 8
+    assert len({(row["datetime"], row["component"]) for row in rows}) == 8
 
 
 @pytest.fixture

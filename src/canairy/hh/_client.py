@@ -147,19 +147,19 @@ class HHClient:
             if params.end is not None:
                 raise ValueError(f"start {params.start} is after end {params.end}")
             return []
-        rows = []
-        seen = set()
+        rows: list[Any] = []
+        shared: set[tuple[str, str, str]] = set()
         # Each response is sorted by datetime, newest first, across all
         # stations and components, so joining windows newest first keeps a
         # global order.
         for start, end in reversed(split_range(params.start, range_end, period)):
             window = params.model_copy(update={"start": start, "end": end})
-            for row in self._get(endpoint, window):
-                # Consecutive windows share their boundary timestamp.
-                key = (row["datetime"], row["station"], row["component"])
-                if key not in seen:
-                    seen.add(key)
-                    rows.append(row)
+            response = self._get(endpoint, window)
+            rows += [row for row in response if _row_key(row) not in shared]
+            # Consecutive windows share their boundary timestamp: only rows at
+            # this window's oldest timestamp can repeat in the next one.
+            oldest = response[-1]["datetime"] if response else None
+            shared = {_row_key(row) for row in response if row["datetime"] == oldest}
         return rows
 
     @sleep_and_retry
@@ -187,6 +187,10 @@ def backoff(func, *args, **kwargs) -> Any:   # type: ignore
             time.sleep(base**i)
     # The last attempt (the only one if MAX_RETRIES <= 1) raises its error.
     return func(*args, **kwargs)
+
+
+def _row_key(row: dict[str, Any]) -> tuple[str, str, str]:
+    return (row["datetime"], row["station"], row["component"])
 
 
 def _is_period(value: str) -> TypeGuard[Periods_T]:
