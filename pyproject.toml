@@ -29,6 +29,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.11.3",
     "ratelimit>=2.2.1",
+    "tzdata>=2026.5",
 ]
 
 [dependency-groups]

@@ -1,4 +1,6 @@
+import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -62,7 +64,20 @@ def test_get_data_keeps_rows_of_other_components(monkeypatch):
     assert len(rows) == 2
 
 
-def test_get_data_splits_open_ended_range_up_to_now(monkeypatch):
+@pytest.fixture
+def utc_host(monkeypatch):
+    monkeypatch.setenv("TZ", "UTC")
+    time.tzset()
+    yield
+    monkeypatch.undo()
+    time.tzset()
+
+
+def berlin_now():
+    return datetime.now(ZoneInfo("Europe/Berlin")).replace(tzinfo=None)
+
+
+def test_get_data_splits_open_ended_range_up_to_now_in_berlin(monkeypatch, utc_host):
     client = HHClient()
     requests = []
 
@@ -71,12 +86,12 @@ def test_get_data_splits_open_ended_range_up_to_now(monkeypatch):
         return []
 
     monkeypatch.setattr(client, "_get", fake_get)
-    before = datetime.now()
+    before = berlin_now()
     client._get_data(
         "stations/13ST/data", make_params(datetime(2024, 1, 1), None), "1h"
     )
     assert len(requests) > 1
-    assert requests[0][1] >= before
+    assert before <= requests[0][1] <= berlin_now()
     assert requests[-1][0] == datetime(2024, 1, 1)
 
 

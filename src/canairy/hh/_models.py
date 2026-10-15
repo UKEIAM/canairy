@@ -1,9 +1,13 @@
 from datetime import datetime
 from typing import Annotated, Any, Self
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, field_serializer, Field
 
 from ._typing import GroupCodes_T, Periods_T, TimeSpans_T, StationGroup_T
+
+# The API reads request datetimes as local Hamburg time.
+BERLIN = ZoneInfo("Europe/Berlin")
 
 
 class BaseParams(BaseModel):

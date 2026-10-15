@@ -8,6 +8,7 @@ import httpx
 from ratelimit import limits, sleep_and_retry
 
 from ._models import (
+    BERLIN,
     BaseParams,
     HHComponent,
     HHComponentParams,
@@ -137,9 +138,9 @@ class HHClient:
                 f"Cannot split a custom range of {endpoint!r}: unknown period"
             )
 
-        # The API defaults a missing end to now; make that explicit so the
-        # range gets split.
-        range_end = params.end or datetime.now()
+        # The API defaults a missing end to its local now; make that explicit
+        # so the range gets split.
+        range_end = params.end or datetime.now(BERLIN).replace(tzinfo=None)
         rows = []
         seen = set()
         # Each response is sorted by datetime, newest first, across all
