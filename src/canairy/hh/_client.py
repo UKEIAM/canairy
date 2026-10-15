@@ -31,6 +31,8 @@ MAX_RETRIES = 8
 
 # The API silently moves a custom start forward to `end - limit` (both ends
 # inclusive, local calendar days). Periods not listed here are not split.
+# The limits are fixed day counts, not calendar months: end 06.03.2025 moves
+# start to 03.02.2025, and 31 days ending after February are returned whole.
 RANGE_LIMITS: dict[Periods_T, timedelta] = {
     "1h": timedelta(days=31),
     "8hg": timedelta(days=31),
