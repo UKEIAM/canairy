@@ -18,7 +18,7 @@ Most are frontend backends that may change without notice.
 | HB Bremen | BLUES | CSV export (luftmessnetz frontend, like HH; no `/api`) | `https://bremen.luftmessnetz.de/station/<code>.csv` | ✅ live |
 | HH Hamburg | HamburgerLuftmessnetz | REST JSON (already implemented: `canairy.hh`) | `https://hamburg.luftmessnetz.de/api` | ✅ live |
 | HE Hessen | HLNUG | none found; download form behind Friendly Captcha | `https://www.hlnug.de/messwerte/datenportal/` | ❌ |
-| MV Mecklenburg-Vorpommern | LUNG / LUME | CSV download API + JSON POST | `https://umweltportal.mv-regierung.de/lung/lume/api/` | ✅ live |
+| MV Mecklenburg-Vorpommern | LUNG / LUME | CSV download API (hourly) + JSON POST (HTML/Chart.js inside, aggregations) | `https://umweltportal.mv-regierung.de/lung/lume/api/` | ✅ live |
 | NI Niedersachsen | LÜN | **documented** JSON file (30 days) | `https://www.luen-ni.de/json30m.txt` | ✅ live |
 | NW Nordrhein-Westfalen | LANUK | **documented** REST JSON | `https://luftqualitaet.nrw.de/api/` | ✅ live |
 | RP Rheinland-Pfalz | ZIMEN | JSON index + CSV files (last 8 h) | `https://zimen.webraum.rlp.de/zimen/data.php` | ✅ live |
@@ -110,7 +110,29 @@ Most are frontend backends that may change without notice.
 - CSV API: `GET https://umweltportal.mv-regierung.de/lung/lume/api/download-stationsdaten?st=32&komp=PM2_5&tst=2026-11-22&tsp=2026-11-24`
   - `Stationsname,StationsID,Komponente,Datum,Zeit,Wert` / `Güstrow,32,PM2_5,2026-11-22,ZEIT0100,2.004`
   - The hour is encoded as `ZEIT0100`…`ZEIT2400` (1–24 notation, as in UBA). Ranges are limited to 400 days.
-- JSON: `POST /lung/lume/api/stationkomponenten` (JSON body with `st`, `komp`, …), used by the page. Not tested.
+  - The CSV endpoint ignores `unit` and always returns hourly values.
+- JSON: `POST /lung/lume/api/stationkomponenten`, used by the page (tested 2026-11-24, ~0.5 s):
+  - Body (`Content-Type: application/json`):
+    `{"st":"32","komp":"PM2_5","unit":"0.0","tst":"22.11.2026","tsp":"24.11.2026"}`
+    - Dates are `DD.MM.YYYY`.
+    - `unit` = `<Auswertung>.<Zeitversatz>`. Auswertung: `0` hourly, `1` daily mean, `2` monthly mean,
+      `3` daily max, `4` daily mean combined, `5` sliding 24h mean combined, `6` monthly max,
+      `7` 8h mean, `8` monthly mean combined. Zeitversatz is the hour offset, max 23 for `5` and 7 for `7`, otherwise 0.
+  - Response: `{"status","result","formKomponenten","formAuswertung","formTimeOffset","formDateStart","formDateStop","linkStationDetails"}`.
+    **The data is not structured JSON.** `result` is an HTML fragment with a `<canvas data-symfony--ux-chartjs--chart-view-value="…">`
+    attribute holding an HTML-escaped Chart.js config. Parse it with `html.unescape` + `json.loads`
+    to get `data.labels` and `data.datasets[].data`.
+  - Formats differ per aggregation:
+    - Hourly: labels like `22.11.2026 0100`…`2400` (1–24 notation), values are floats or `null` (future hours).
+    - Daily: labels like `17. Nov. 2026` (German month abbreviations), values are **strings** (`"5.589"`).
+    - 8h mean: labels like `17. Nov. 2026 08:00`, string values.
+  - Test result: Güstrow PM2.5 hourly, 72 labels, latest value `24.11.2026 1400` = 1.415, so live.
+  - Errors are not signalled: an unknown station still returns `status: "OK"`, with a German
+    "Keine Daten im gewählten Zeitraum vorhanden." warning inside `result`.
+  - `formKomponenten` (HTML `<select>`) lists the station's components: `PM10, PM2_5, NO2, O3, NO, NOx, WIG, TMP`.
+    This is the only way found so far to discover components per station.
+- Recommendation: use the CSV endpoint for hourly data, and the POST endpoint only for server-side
+  aggregations and component discovery. The POST endpoint is effectively a scraping target with a JSON wrapper.
 
 ### Niedersachsen (LÜN)
 
