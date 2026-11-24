@@ -1,0 +1,204 @@
+# Air-quality data endpoints of the German federal states
+
+Survey of each state's air-measurement network for machine-readable endpoints, time-boxed to
+about 5 minutes per state. Probed on **2026-11-24** with plain `curl`. "Live" means the smoke test
+returned values for the current day (13:00/14:00 CET).
+
+None of the endpoints below are versioned public APIs, except NI's documented feed and NRW's documented REST API.
+Most are frontend backends that may change without notice.
+
+## Summary
+
+| State | Network | Endpoint type | Base URL | Smoke test |
+|---|---|---|---|---|
+| BW Baden-Württemberg | LUBW | JSON (LUPO frontend backend) | `https://lupo-cloud.de/air-app/` | ✅ live |
+| BY Bayern | LfU / LÜB | static CSV per station × component | `https://www.lfu.bayern.de/_data_extern/luft/immissionsmessungen/csv/` | ✅ live |
+| BE Berlin | BLUME | REST JSON, same software as HH, Swagger docs | `https://luftdaten.berlin.de/api` | ✅ live |
+| BB Brandenburg | LfU BB | CSV export (Liferay portlet), current hour only | `https://luftdaten.brandenburg.de/luftguete?...exportCsv` | ✅ live |
+| HB Bremen | BLUES | CSV export (luftmessnetz frontend, like HH; no `/api`) | `https://bremen.luftmessnetz.de/station/<code>.csv` | ✅ live |
+| HH Hamburg | HamburgerLuftmessnetz | REST JSON (already implemented: `canairy.hh`) | `https://hamburg.luftmessnetz.de/api` | ✅ live |
+| HE Hessen | HLNUG | none found; download form behind Friendly Captcha | `https://www.hlnug.de/messwerte/datenportal/` | ❌ |
+| MV Mecklenburg-Vorpommern | LUNG / LUME | CSV download API + JSON POST | `https://umweltportal.mv-regierung.de/lung/lume/api/` | ✅ live |
+| NI Niedersachsen | LÜN | **documented** JSON file (30 days) | `https://www.luen-ni.de/json30m.txt` | ✅ live |
+| NW Nordrhein-Westfalen | LANUK | **documented** REST JSON | `https://luftqualitaet.nrw.de/api/` | ✅ live |
+| RP Rheinland-Pfalz | ZIMEN | JSON index + CSV files (last 8 h) | `https://zimen.webraum.rlp.de/zimen/data.php` | ✅ live |
+| SL Saarland | IMMESA | HTML tables only (scraping) | `https://umweltserver.saarland.de/extern/luft/` | ⚠️ live, HTML only |
+| SN Sachsen | LfULG | ASP.NET WebForms CSV postback (needs ViewState) | `https://www.umwelt.sachsen.de/umwelt/infosysteme/luftonline/` | ❌ not tested |
+| ST Sachsen-Anhalt | LÜSA | JSON (LUPO frontend backend) | `https://lupo-cloud.de/st-air-app/` | ✅ live |
+| SH Schleswig-Holstein | LÜSH | none of its own; open data links to UBA | (UBA API) | ❌ |
+| TH Thüringen | TLUBN | JSON (LUPO frontend backend) | `https://lupo-cloud.de/th-air-app/` | ✅ live |
+
+### Shared platforms (one client could cover several states)
+
+- **luftmessnetz software** (HH, BE, HB): HH and BE expose the same `/api` (Swagger at `/api/doc`), so
+  `canairy.hh` should mostly work against Berlin by swapping `BASE_URL`. Bremen runs the same frontend
+  but answers `/api/*` with 404, so only its CSV export is available.
+- **LUPO cloud** (BW, ST, TH): `https://lupo-cloud.de/<prefix>/{stations,station,table}` with
+  prefixes `air-app` (BW), `st-air-app` (ST), `th-air-app` (TH). The response shapes differ slightly
+  between BW and ST/TH.
+- **Liferay** (BB, ST, TH portals): the portals themselves only embed data; the data sits elsewhere.
+
+## Details per state
+
+### Baden-Württemberg (LUBW)
+
+- Found in the page source of `https://www.lubw.baden-wuerttemberg.de/luft/messwerte-immissionswerte`
+  (that host returns 403 to curl's default user agent; use a browser UA).
+- `GET https://lupo-cloud.de/air-app/stations` → `{"selector":{"stations":[{"id":"DEBW029","name":"Aalen","lat":…,"lon":…},…]}}`
+- `GET https://lupo-cloud.de/air-app/station?id=DEBW029&component=no2` → `infoPanel.station` with
+  latest/min/max/avg for today and yesterday per component (NO2, O3, PM10, PM2.5, LUQX index). The
+  `*Chart` keys came back empty in the test, and no hourly time series was found yet.
+- `table?component=no2&id=…` returned `{"table":{}}`.
+- Also: UDO (`https://udo.lubw.baden-wuerttemberg.de/public/`), an interactive export UI, linked per component.
+
+### Bayern (LfU)
+
+- Station pages: `https://www.lfu.bayern.de/luft/immissionsmessungen/messwerte/stationen/detail/<station>/<comp>`
+- CSV: `https://www.lfu.bayern.de/_data_extern/luft/immissionsmessungen/csv/csv_<station>_<comp>.csv`
+  - Example `csv_607_130.csv` (component 130 = PM2.5): rows `24.11.2026;13:00;8`, newest first, last 48 h,
+    `;`-separated, no header.
+  - Component codes seen: 130 (PM2.5), 172, 180. The station/component code list still has to be
+    taken from the station index page `…/messwerte/stationen/index.htm`.
+- No JSON API found.
+
+### Berlin (BLUME)
+
+- `https://luftdaten.berlin.de/api` has the same API as Hamburg, documented with Swagger UI at `/api/doc`.
+- `GET /api/stations` → list with `code` (`mc010`), `codeEu` (`DEBE010`), coordinates, `measuringStart`.
+- `GET /api/components` → codes like `pm10_1h`, `no2_1h`, with `core`/`period`.
+- `GET /api/components/no2_1h/data` → `[{"datetime":"2026-11-24T13:00:00+01:00","station":"mc117","core":"no2","component":"no2_1h","period":"1h","value":12.0},…]`
+- `GET /api/stations/mc010/data?timespan=last24h&period=1h` → `[]`. The parameter names may differ from the
+  HH client's; check against `/api/doc`.
+- Whether Berlin has the same silent range truncation as HH (`RANGE_LIMITS`) has not been checked.
+
+### Brandenburg (LfU Brandenburg)
+
+- Portal `https://luftdaten.brandenburg.de/` (Liferay), station pages `/w/<slug>`.
+- CSV snapshot of the current hour for all stations:
+  `https://luftdaten.brandenburg.de/luftguete?p_p_id=zitbb_luftguete_portlet_LuftguetePortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=exportCsv&p_p_cacheability=cacheLevelPage`
+  - latin-1, `;`-separated, quoted, HTML (`<sub>`) inside the column headers, decimal comma.
+  - Station names only, no EU codes.
+- No time-series endpoint found within the time box.
+
+### Bremen (BLUES)
+
+- `https://luftmessnetz.bremen.de/` redirects/links to `https://bremen.luftmessnetz.de/` (luftmessnetz frontend).
+- `/api/*` → 404, so there is no JSON API.
+- CSV per station with a custom range:
+  `https://bremen.luftmessnetz.de/station/DEHB001.csv?group=pollution&period=1h&timespan=custom&start[date]=23.11.2026&start[hour]=14&end[date]=24.11.2026&end[hour]=14`
+  - 4 header rows (station, component, unit, period), then `23.11.2026 14:00;12;21;…`.
+- Stations: DEHB001, 002, 004, 005, 006, 012, 013, 014, 015 (from `/lqi`).
+
+### Hamburg
+
+- Already implemented (`canairy.hh`). `GET https://hamburg.luftmessnetz.de/api/stations` → 200 JSON.
+
+### Hessen (HLNUG) — not found
+
+- Data portal `https://www.hlnug.de/messwerte/datenportal/messstelle/<medium>/<theme>/<station>` (TYPO3
+  extension `tx_messdaten`, charts loaded via RequireJS `stationView.min.js`).
+- The download form (`tx_messdaten_station[action]=downloadMeasurementsTable`) is protected by Friendly
+  Captcha.
+- No XHR endpoint found in the HTML or the JS within the time box. **Next step:** open the station page in a browser
+  and watch DevTools → Network for the chart data request.
+
+### Mecklenburg-Vorpommern (LUNG)
+
+- Linked from `https://www.lung.mv-regierung.de/fachinformationen/luft/luftgueteueberwachung/`.
+- Frontend: `https://umweltportal.mv-regierung.de/lung/lume/stationswerte`,
+  `…/timejump?days=3&station=32&komp=PM2_5`.
+- CSV API: `GET https://umweltportal.mv-regierung.de/lung/lume/api/download-stationsdaten?st=32&komp=PM2_5&tst=2026-11-22&tsp=2026-11-24`
+  - `Stationsname,StationsID,Komponente,Datum,Zeit,Wert` / `Güstrow,32,PM2_5,2026-11-22,ZEIT0100,2.004`
+  - The hour is encoded as `ZEIT0100`…`ZEIT2400` (1–24 notation, as in UBA). Ranges are limited to 400 days.
+- JSON: `POST /lung/lume/api/stationkomponenten` (JSON body with `st`, `komp`, …), used by the page. Not tested.
+
+### Niedersachsen (LÜN)
+
+- **Officially documented** in "Erläuterungen und Hinweise zu den LÜN-Daten"
+  (`https://www.umwelt.niedersachsen.de/download/60236`, appendix "Beschreibung der json-Schnittstelle").
+- `GET https://www.luen-ni.de/json30m.txt` (~1.1 MB)
+  - **latin-1 encoded**, despite being JSON.
+  - Top-level keys: `Dateihistorie, messnetz, datum, zeit, zeitzone, bezugsquelle, kommentar, komponenten, stationen, messwerte`.
+  - `stationen[]` contains `kennung` (`BGSW`), `EOI-Kennung` (`DENI011`), coordinates with a decimal comma.
+  - `messwerte[]` gives, per station, `messstellen[]` with `kennung` (component, e.g. `PM1024`, `NO2`, `O3`),
+    `luftqualitaet` and a `verlauf` array (the 30-day history).
+  - Test result: `datum: 24.11.2026`, `zeit: 14:00`, `zeitzone: UTC+1h`.
+- The data are marked provisional (not fully validated).
+
+### Nordrhein-Westfalen (LANUK)
+
+- **Officially documented** at `https://luftqualitaet.nrw.de/apidoku.php`.
+- Endpoints (`https://luftqualitaet.nrw.de/api/…`): `basis.php`, `station.php`, `stundenmittelwerte.php`,
+  `g8stundenmittelwerte.php`, `tagesmittelwerte.php`, `tagessummenwerte.php`, `monatsmittelwerte.php`,
+  `monatssummenwerte.php`, `jahresmittelwerte.php`, `jahressummenwerte.php`, `lqindex.php`,
+  `gesamtlqindex.php`, `ozonwarnung.php`, `limits.php`.
+- `GET /api/station.php` → all stations (`mstkey`, `mstkrz`, `msteucode` = `DENW094`, …).
+- `GET /api/stundenmittelwerte.php?station=1&komponente=1&beginn=2026-11-24T00:00&ende=2026-11-24T23:00`
+  → positional arrays `[station, komponente, methode, matrix, aggregation, "start", "end", value, value, ?, validated]`,
+  last row `2026-11-24 12:00–13:00`.
+  Without `beginn`, the response starts at 2019-12-31.
+- Bulk open data also at `https://www.opengeodata.nrw.de/produkte/umwelt_klima/luftqualitaet/luqs/`.
+
+### Rheinland-Pfalz (ZIMEN)
+
+- A widget script `https://zimen.webraum.rlp.de/zimen/zimen.v.js` is embedded on
+  `https://luft.rlp.de/zentrales-immissionsmessnetz-zimen/luftschadstoffe`.
+- `GET https://zimen.webraum.rlp.de/zimen/data.php?type=messwert` (also `messwert_t`, `station`, `station_t`)
+  → JSON `{ "<md5>": {"file": "K01_aktuelleLuftmesswertePM10.csv", "type": "messwert", "name": "PM10"}, … }`
+- `GET …/data.php?data=<md5>` → CSV, a title line `Luftmesswerte - PM10 [µg/m³] vom 24.11.2026 14:00`, then
+  `Standorte; 14:00; 13:00; …` covering the last 8 hours plus the max 1h value; one row per station (by name).
+- Only the last 8 hours are available, so the data must be polled continuously.
+
+### Saarland (IMMESA) — HTML only
+
+- `https://umweltserver.saarland.de/extern/luft/` (note: `https://www.umweltserver…` has a TLS cert
+  mismatch; `www.saarland.de` returns 403 for non-browser UAs).
+- Current values: `immeakt2.php?status=no2` (also `so2`, `o3`, `co`, BTXS); daily/weekly series in
+  `immegra2.php?a=<station>&b=<comp>`; a map in `immemap2.php`.
+- The test page showed `1-Stunden-Mittelwerte am 24.11.2026 … 14:00 13:00 …`, latin-1, not validated.
+- No CSV/JSON found, so it can only be scraped.
+
+### Sachsen (LfULG) — no API found
+
+- `https://www.umwelt.sachsen.de/umwelt/infosysteme/luftonline/` (ASP.NET WebForms), and
+  `https://www.luft.sachsen.de/aktuelle-messwerte-15045.html`.
+- `Recherche.aspx` has a CSV button (`ctl00_ctl00_Inhalt_Inhalt_BtnCsvDown`), which requires a full
+  `__VIEWSTATE` postback. That is feasible with a session, but was not tested within the time box.
+- Prior art: GitHub `CodeforLeipzig/luftqualitaet_sachsen`.
+
+### Sachsen-Anhalt (LÜSA)
+
+- Portal `https://umwelt.sachsen-anhalt.de/luft-messwerte` (Liferay, LUPO theme).
+- `GET https://lupo-cloud.de/st-air-app/stations` → `{"selector":{"stations":[{"label":"Aschersleben","id":"DEST095",…}]}}`
+- `GET https://lupo-cloud.de/st-air-app/station?id=DEST095&component=no2&from=2026-11-24`
+  → `infopanel.station.components.<comp>` with `latest_time` (epoch ms), `latest_value`, `max_today`, … .
+  **`from` is required**; without it the response is `{"_s":false}`.
+- `GET …/table?component=no2&id=DEST095` → `table-urban`/`-rural`/`-industry` rows with values for all stations.
+- Also `https://dev.lupo-cloud.de/st-air-app/o3limit`.
+
+### Schleswig-Holstein (LÜSH) — no own API
+
+- `https://www.schleswig-holstein.de/DE/fachinhalte/L/luftqualitaet/aktuelleluftschadstoffdaten`
+  links to `https://umweltportal.schleswig-holstein.de/messwertsuche` (server-side form, no API seen) and
+  to `https://opendata.schleswig-holstein.de/dataset?tags=Luft`.
+- The CKAN datasets (one per station × component × year) only contain links to the old UBA
+  `api/air_data/v2` URLs, which now return 301. For SH, use `canairy.uba`.
+
+### Thüringen (TLUBN)
+
+- Portal `https://www.umweltportal.thueringen.de/luft-messwerte` (Liferay, LUPO cooperation).
+- `GET https://lupo-cloud.de/th-air-app/stations` → stations `DETH011`, …
+- `GET https://lupo-cloud.de/th-air-app/station?id=DETH011&component=no2&from=2026-11-24` → same shape as ST;
+  `displayTime: "Dienstag, 24. November 2026 14:00"`.
+- The page template references `https://lupo-cloud.de/th-air-app/csv-export/csv/<station>_<COMP>…`. Guessed
+  names (`DETH011_NO2.csv`) returned 400; the exact filename suffix is still unknown.
+- Also `https://www.umweltportal.thueringen.de/opendata-luft` (not examined).
+
+## Suggested next steps
+
+1. **Berlin**: try `canairy.hh` with the Berlin `BASE_URL`; check the parameter names and truncation limits.
+2. **NRW** and **NI**: documented and stable, so they are the best candidates for new clients.
+3. **LUPO** (BW/ST/TH): one client parameterized by app prefix; find the time-series/CSV endpoint
+   (browser DevTools).
+4. **MV**, **BY**, **HB**, **RP**, **BB**: CSV-based clients; RP and BB only give recent snapshots, so they need polling.
+5. **HE**, **SN**, **SL**, **SH**: fall back to the UBA API, or invest in DevTools inspection/scraping.
