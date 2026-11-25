@@ -30,7 +30,7 @@ More federal-state networks are planned.
 
 - One client class per data source with typed `get_*` methods
 - Responses parsed into pydantic models with real `datetime`s
-- Built-in HTTP caching ([hishel](https://hishel.com)), rate limiting (120 requests/min) and retries with exponential backoff
+- Built-in HTTP caching ([hishel](https://hishel.com)), rate limiting (120 requests/min per API host; cache hits don't count) and retries with exponential backoff
 - `aq-downloader` command for bulk downloads of UBA data
 
 ## Installation
