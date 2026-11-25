@@ -4,8 +4,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from canairy.hh import HHClient
 from canairy._luftmessnetz._models import ComponentDataParams, StationDataParams
+from canairy.hh import HHClient
 
 
 def make_row(dt, component="no2_1h"):

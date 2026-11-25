@@ -1,5 +1,6 @@
 import datetime
-from typing import Any, Self, Sequence
+from collections.abc import Sequence
+from typing import Any, Self
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -66,7 +67,7 @@ class UBAMeasuresGetResponseRequest(BaseResponse):
     @field_validator("time_to", "time_from", mode="before")
     @classmethod
     def _hour_string_to_time(cls, val: str) -> datetime.time:
-        h, m, s = map(lambda x: int(x), val.split(":"))
+        h, m, s = (int(x) for x in val.split(":"))
         return datetime.time(h - 1, m, s)
 
 
@@ -92,8 +93,8 @@ class Measurement(BaseModel):
     @classmethod
     def _fix_end_date(cls, val: str) -> datetime.datetime:
         date, time = val.split(" ")
-        parsed_date = datetime.date(*map(lambda x: int(x), date.split("-")))
-        h, m, s = map(lambda x: int(x), time.split(":"))
+        parsed_date = datetime.date(*(int(x) for x in date.split("-")))
+        h, m, s = (int(x) for x in time.split(":"))
         if h == 24:
             h = 0
             parsed_date += datetime.timedelta(days=1)

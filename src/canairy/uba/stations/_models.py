@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Self, Union
+from typing import Any, Self
 
 from pydantic import BaseModel
 
@@ -42,7 +42,7 @@ class Station(BaseModel):
 
     @classmethod
     def from_flat_dict(cls, raw: StrDict) -> Self:
-        root: dict[str, Union[str | StrDict]] = {}
+        root: dict[str, str | StrDict] = {}
         sm_type: StrDict = {}
         sm_setting: StrDict = {}
         sm_network: StrDict = {}
@@ -124,7 +124,7 @@ class UBAStationGetResponse(BaseModel):
 
     @classmethod
     def from_response(cls, response: Any) -> Self:
-        indices = list(map(lambda x: x.removeprefix("station "), response["indices"]))
+        indices = [x.removeprefix("station ") for x in response["indices"]]
         data = [
             Station.from_flat_dict({k: v for (k, v) in zip(indices, item, strict=True)})
             for item in response["data"].values()

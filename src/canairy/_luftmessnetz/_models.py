@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Annotated, Any, Self
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, field_serializer, field_validator, Field
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
-from ._typing import GroupCodes_T, Periods_T, TimeSpans_T, StationGroup_T
+from ._typing import GroupCodes_T, Periods_T, StationGroup_T, TimeSpans_T
 
 # The API reads request datetimes as local German time (Europe/Berlin).
 BERLIN = ZoneInfo("Europe/Berlin")

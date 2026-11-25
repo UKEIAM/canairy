@@ -108,8 +108,8 @@ class UBAClient:
         response = self._get("thresholds", params)
         return UBAThresholdsGetResponse.from_response(response)
 
-    @sleep_and_retry  # type: ignore
-    @limits(120, period=60)  # type: ignore
+    @sleep_and_retry
+    @limits(120, period=60)
     def _get(self, endpoint: str, params: BaseParams | None = None) -> Any:
         params_ = params.model_dump(exclude_none=True) if params else None
 
@@ -120,7 +120,7 @@ class UBAClient:
         return f"{UBAClient.BASE_URL}/{endpoint}/json"
 
 
-def backoff(func, *args, **kwargs) -> Any:  # type: ignore
+def backoff(func, *args, **kwargs) -> Any:
     base = 2
     for i in range(1, MAX_RETRIES):
         try:

@@ -12,7 +12,7 @@ def filter_stations_by_network(
     if isinstance(query, str) and len(query) == 2:
         query = query.upper()
     for station in stations:
-        for field in UBANetwork.model_fields.keys():
+        for field in UBANetwork.model_fields:
             if getattr(station.network, field) == query:
                 out.append(station)
 
