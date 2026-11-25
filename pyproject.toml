@@ -27,21 +27,21 @@ requires-python = ">=3.12"
 dependencies = [
     "hishel[httpx2]>=2.0",
     "httpx2>=2.16.2",
-    "pydantic>=2.11.3",
+    "pydantic>=2.14.4",
     "ratelimit>=2.2.1",
-    "tzdata>=2026.5",
+    "tzdata>=2026.6",
 ]
 
 [dependency-groups]
 dev = [
-    "ipykernel>=6.29.5",
-    "mypy>=1.15.0",
-    "pytest>=8.3.5",
-    "ruff>=0.11.5",
+    "ipykernel>=7.4.0",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "ruff>=0.17.6",
 ]
 
 [build-system]
-requires = ["setuptools>=79"]
+requires = ["setuptools>=84"]
 build-backend = "setuptools.build_meta"
 
 
