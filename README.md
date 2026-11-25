@@ -7,7 +7,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/canairy)](https://pypi.org/project/canairy/)
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14%20%7C%203.15-blue)](https://github.com/UKEIAM/canairy/actions/workflows/tests.yml)
-[![Coverage](https://raw.githubusercontent.com/UKEIAM/canairy/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/UKEIAM/canairy/blob/python-coverage-comment-action-data/htmlcov/index.html)
+[![Coverage](https://raw.githubusercontent.com/UKEIAM/canairy/coverage-badge/badge.svg)](https://github.com/UKEIAM/canairy/actions/workflows/tests.yml?query=branch%3Adevelop)
 [![License](https://img.shields.io/pypi/l/canairy)](https://github.com/UKEIAM/canairy/blob/develop/LICENSE)
 
 Typed Python clients for public German air-quality APIs.

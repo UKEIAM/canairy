@@ -74,23 +74,41 @@ jobs:
           include-hidden-files: true
           if-no-files-found: ignore
 
-  # Combines the coverage data of all test jobs, comments the result on PRs
-  # and, on pushes to develop, updates the README badge (stored in the
-  # python-coverage-comment-action-data branch).
+  # Combines the coverage data of all test jobs into the job summary and, on
+  # pushes to develop, publishes the README badge to the coverage-badge
+  # branch. Uses only GitHub-owned actions and astral-sh/setup-uv, as the
+  # repository's Actions policy blocks most third-party actions.
   coverage:
     needs: [offline, integration]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
       - uses: actions/download-artifact@v4
         with:
           pattern: coverage-*
           merge-multiple: true
-      - uses: py-cov-action/python-coverage-comment-action@v3
-        with:
-          GITHUB_TOKEN: ${{ github.token }}
-          MERGE_COVERAGE_FILES: true
+      - run: uv sync --locked
+      - run: uv run coverage combine
+      - run: uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          total=$(uv run coverage report --format=total)
+          dir="$RUNNER_TEMP/badge"
+          mkdir "$dir"
+          uv run python .github/scripts/coverage_badge.py "$total" > "$dir/badge.svg"
+          cd "$dir"
+          git init -q -b coverage-badge
+          git add badge.svg
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Update coverage badge (${total}%)"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" coverage-badge
