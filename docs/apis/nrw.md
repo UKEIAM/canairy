@@ -9,9 +9,6 @@
 | Coverage | 463 stations incl. closed and special-purpose sites; hourly from 2019-12-31 (meteorology 2020-01-01), daily/monthly/yearly from 2010 |
 | Bulk open data | `https://www.opengeodata.nrw.de/produkte/umwelt_klima/luftqualitaet/luqs/` (not used) |
 
-!!! note "Not yet on `develop`"
-    `canairy.nrw` lives on the branch `feat/nrw-client` until it is merged.
-
 ## Usage
 
 ```python

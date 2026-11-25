@@ -8,9 +8,6 @@
 | Documentation | appendix "Beschreibung der json-Schnittstelle" of [Erläuterungen und Hinweise zu den LÜN-Daten](https://www.umwelt.niedersachsen.de/download/60236) (PDF) |
 | Coverage | 28 stations, hourly values of the **last 30 days only**, provisional |
 
-!!! note "Not yet on `develop`"
-    `canairy.ni` lives on the branch `feat/niedersachsen-client` until it is merged.
-
 LÜN has no queryable API. It publishes one file with the hourly values of all stations over
 the last 30 days. `NIClient.get_data()` fetches and parses the whole file.
 
