@@ -109,6 +109,48 @@ def test_air_quality(data):
     assert data.get_series("BGSW", "TT").air_quality is None
 
 
+def documented_format(feed: dict) -> dict:
+    """Convert to the documented format: verlauf_stundenwerte/_indexwerte."""
+    for station in feed["messwerte"]:
+        for item in station["messstellen"]:
+            item["verlauf_stundenwerte"] = item.pop("verlauf")
+            if item.pop("luftqualitaet", None) is not None:
+                item["verlauf_indexwerte"] = ["1,4", "***", "1,25"]
+    return feed
+
+
+def test_documented_format_with_index_history():
+    data = NIData.from_response(documented_format(make_feed()))
+    no2 = data.get_series("BGSW", "NO2")
+    assert [v.value for v in no2.values] == [14.0, None, None]
+    assert [v.air_quality for v in no2.values] == [1.4, None, 1.25]
+    assert no2.air_quality == 1.25  # the newest index value
+    tt = data.get_series("BGSW", "TT")
+    assert [v.value for v in tt.values] == [-1.5, 0.3, 2.0]
+    assert tt.air_quality is None
+    assert all(v.air_quality is None for v in tt.values)
+
+
+def test_documented_format_missing_current_index():
+    feed = documented_format(make_feed())
+    feed["messwerte"][0]["messstellen"][0]["verlauf_indexwerte"][-1] = "***"
+    assert NIData.from_response(feed).get_series("BGSW", "NO2").air_quality is None
+
+
+def test_index_history_length_mismatch_raises():
+    feed = documented_format(make_feed())
+    feed["messwerte"][0]["messstellen"][0]["verlauf_indexwerte"].pop()
+    with pytest.raises(ValueError, match="index values"):
+        NIData.from_response(feed)
+
+
+def test_series_without_values_raises():
+    feed = make_feed()
+    del feed["messwerte"][0]["messstellen"][1]["verlauf"]
+    with pytest.raises(ValueError, match="No values"):
+        NIData.from_response(feed)
+
+
 def test_air_quality_zero_means_no_current_value():
     feed = make_feed()
     feed["messwerte"][0]["messstellen"][0]["luftqualitaet"] = "0,00"

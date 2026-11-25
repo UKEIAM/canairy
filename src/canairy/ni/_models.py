@@ -77,15 +77,18 @@ class Value(BaseModel):
     value: float | None
     # Set if the value is below this detection limit ("<0,6" in the feed).
     detection_limit: float | None = None
+    # Air-quality index of this hour; only in files with `verlauf_indexwerte`.
+    air_quality: float | None = None
 
     @classmethod
-    def from_raw(cls, dt: _DateTime, raw: str) -> Self:
+    def from_raw(cls, dt: _DateTime, raw: str, raw_aq: str | None = None) -> Self:
+        aq = _parse_optional(raw_aq)
         if raw == MISSING:
-            return cls(datetime=dt, value=None)
+            return cls(datetime=dt, value=None, air_quality=aq)
         if raw.startswith(BELOW_LIMIT_PREFIX):
             limit = parse_number(raw.removeprefix(BELOW_LIMIT_PREFIX))
-            return cls(datetime=dt, value=None, detection_limit=limit)
-        return cls(datetime=dt, value=parse_number(raw))
+            return cls(datetime=dt, value=None, detection_limit=limit, air_quality=aq)
+        return cls(datetime=dt, value=parse_number(raw), air_quality=aq)
 
 
 class Series(BaseModel):
@@ -150,19 +153,44 @@ def parse_timestamp(date: str, time: str, zone: str) -> datetime:
     return naive.replace(tzinfo=tz).astimezone(BERLIN)
 
 
+def _parse_optional(raw: str | None) -> float | None:
+    return None if raw is None or raw == MISSING else parse_number(raw)
+
+
 def _parse_series(station: str, item: dict[str, Any], timestamp: datetime) -> Series:
-    raw_values = item["verlauf"]
+    # The publisher alternates between two formats (seen on 2026-11-25):
+    # - "verlauf" plus the current index "luftqualitaet" (Dateihistorie:
+    #   "verlauf_indexwerte entfernt", 2026-09-21);
+    # - the documented "verlauf_stundenwerte" plus the hourly index history
+    #   "verlauf_indexwerte", without "luftqualitaet".
+    if "verlauf" in item:
+        raw_values = item["verlauf"]
+    elif "verlauf_stundenwerte" in item:
+        raw_values = item["verlauf_stundenwerte"]
+    else:
+        raise ValueError(f"No values for {station}/{item.get('kennung')}: {list(item)}")
+    raw_index = item.get("verlauf_indexwerte")
+    if raw_index is not None and len(raw_index) != len(raw_values):
+        raise ValueError(
+            f"{station}/{item.get('kennung')}: {len(raw_index)} index values "
+            f"for {len(raw_values)} values"
+        )
+    raw_aqs = raw_index or [None] * len(raw_values)
     n = len(raw_values)
     # The newest value is last and belongs to the feed timestamp. Step back in
     # UTC so the hours stay evenly spaced across DST changes.
     end = timestamp.astimezone(UTC)
     values = [
-        Value.from_raw((end - timedelta(hours=n - 1 - i)).astimezone(BERLIN), raw)
-        for i, raw in enumerate(raw_values)
+        Value.from_raw(
+            (end - timedelta(hours=n - 1 - i)).astimezone(BERLIN), raw, raw_aq
+        )
+        for i, (raw, raw_aq) in enumerate(zip(raw_values, raw_aqs, strict=True))
     ]
-    raw_aq = item.get("luftqualitaet")
+    if "luftqualitaet" in item:
+        air_quality = _parse_optional(item["luftqualitaet"])
+    else:
+        air_quality = values[-1].air_quality if values else None
     # "0,00" marks a pollutant without a current value.
-    air_quality = parse_number(raw_aq) if raw_aq is not None else None
     if air_quality == 0:
         air_quality = None
     return Series(
