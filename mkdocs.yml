@@ -1,0 +1,55 @@
+site_name: canairy
+site_description: Typed Python clients for public German air-quality APIs
+repo_url: https://github.com/UKEIAM/canairy
+repo_name: UKEIAM/canairy
+edit_uri: edit/develop/docs/
+copyright: © 2025 Institut für Angewandte Medizininformatik
+
+theme:
+  name: material
+  logo: assets/icon.svg
+  favicon: assets/icon.svg
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Air quality APIs in Germany:
+      - apis/index.md
+      - Umweltbundesamt (UBA): apis/uba.md
+      - Hamburg (HH): apis/hh.md
+      - Berlin (BE): apis/be.md
+      - Niedersachsen (NI): apis/ni.md
+      - Nordrhein-Westfalen (NRW): apis/nrw.md
+  - HTTP behaviour: http.md
+  - Bulk download: downloader.md
+  - Development: development.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+
+validation:
+  links:
+    anchors: warn

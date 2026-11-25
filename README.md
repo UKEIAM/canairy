@@ -24,7 +24,9 @@ Supported data sources:
 | `canairy.hh`   | [Hamburger Luftmessnetz](https://hamburg.luftmessnetz.de) (HH)                                | Hamburg, hourly/daily from 2012, monthly from 1984 |
 | `canairy.be`   | [Berliner Luftgütemessnetz](https://luftdaten.berlin.de) (BLUME, BE)                         | Berlin, hourly/daily back to the station start (1980s/90s) |
 
-More federal-state networks are planned.
+More federal-state networks are planned; [`docs/apis/index.md`](https://github.com/UKEIAM/canairy/blob/develop/docs/apis/index.md)
+surveys what each state offers. The documentation in [`docs/`](https://github.com/UKEIAM/canairy/tree/develop/docs)
+describes every client in detail, including its findings and limitations.
 
 ## Features
 
