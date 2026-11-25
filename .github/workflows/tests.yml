@@ -39,6 +39,7 @@ jobs:
           uv run coverage run -m pytest
           --ignore=tests/hh/test_hh_client.py
           --ignore=tests/be/test_be_client.py
+          --ignore=tests/nrw/test_nrw_client.py
           --ignore-glob='tests/uba/test_get_*.py'
         env:
           COVERAGE_FILE: .coverage.offline-${{ matrix.python-version }}
@@ -63,6 +64,7 @@ jobs:
           uv run coverage run -m pytest
           tests/hh/test_hh_client.py
           tests/be/test_be_client.py
+          tests/nrw/test_nrw_client.py
           tests/uba/test_get_*.py
         env:
           COVERAGE_FILE: .coverage.integration

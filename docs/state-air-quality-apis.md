@@ -20,7 +20,7 @@ Most are frontend backends that may change without notice.
 | HE Hessen | HLNUG | none found; download form behind Friendly Captcha | `https://www.hlnug.de/messwerte/datenportal/` | ❌ |
 | MV Mecklenburg-Vorpommern | LUNG / LUME | CSV download API (hourly) + JSON POST (HTML/Chart.js inside, aggregations) | `https://umweltportal.mv-regierung.de/lung/lume/api/` | ✅ live |
 | NI Niedersachsen | LÜN | **documented** JSON file (30 days) | `https://www.luen-ni.de/json30m.txt` | ✅ live |
-| NW Nordrhein-Westfalen | LANUK | **documented** REST JSON | `https://luftqualitaet.nrw.de/api/` | ✅ live |
+| NW Nordrhein-Westfalen | LANUK | **documented** REST JSON (implemented: `canairy.nrw`) | `https://luftqualitaet.nrw.de/api/` | ✅ live |
 | RP Rheinland-Pfalz | ZIMEN | JSON index + CSV files (last 8 h) | `https://zimen.webraum.rlp.de/zimen/data.php` | ✅ live |
 | SL Saarland | IMMESA | HTML tables only (scraping) | `https://umweltserver.saarland.de/extern/luft/` | ⚠️ live, HTML only |
 | SN Sachsen | LfULG | ASP.NET WebForms CSV postback (needs ViewState) | `https://www.umwelt.sachsen.de/umwelt/infosysteme/luftonline/` | ❌ not tested |
@@ -175,9 +175,12 @@ Most are frontend backends that may change without notice.
   `gesamtlqindex.php`, `ozonwarnung.php`, `limits.php`.
 - `GET /api/station.php` → all stations (`mstkey`, `mstkrz`, `msteucode` = `DENW094`, …).
 - `GET /api/stundenmittelwerte.php?station=1&komponente=1&beginn=2026-11-24T00:00&ende=2026-11-24T23:00`
-  → positional arrays `[station, komponente, methode, matrix, aggregation, "start", "end", value, value, ?, validated]`,
+  → positional arrays `[mstkey, kmpkey, matkey, metkey, einkey, "start", "end", messwert, rohwert, nwg, freigabe]`
+  (documented; matrix comes before method, `einkey` is the unit, `nwg` the detection limit),
   last row `2026-11-24 12:00–13:00`.
   Without `beginn`, the response starts at 2019-12-31.
+- Implemented as `canairy.nrw` (2026-11-25), covering all documented endpoints. Times are CET (UTC+1)
+  year-round; values below the detection limit are strings like `"<10"`; "no data" is HTTP 200 with a `fehler` object.
 - Bulk open data also at `https://www.opengeodata.nrw.de/produkte/umwelt_klima/luftqualitaet/luqs/`.
 
 ### Rheinland-Pfalz (ZIMEN)
