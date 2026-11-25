@@ -1,7 +1,7 @@
 [project]
 name = "canairy"
 version = "0.3.0"
-description = "Client for German public air-quality APIs (UBA, Hamburg and Berlin luftmessnetz)"
+description = "Client for German public air-quality APIs (UBA, Hamburg, Berlin and Niedersachsen)"
 readme = "README.md"
 authors = [
     { name = "Michael Blaß", email = "m.blass@uke.de" }

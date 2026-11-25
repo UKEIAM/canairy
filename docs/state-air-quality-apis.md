@@ -19,7 +19,7 @@ Most are frontend backends that may change without notice.
 | HH Hamburg | HamburgerLuftmessnetz | REST JSON (already implemented: `canairy.hh`) | `https://hamburg.luftmessnetz.de/api` | ✅ live |
 | HE Hessen | HLNUG | none found; download form behind Friendly Captcha | `https://www.hlnug.de/messwerte/datenportal/` | ❌ |
 | MV Mecklenburg-Vorpommern | LUNG / LUME | CSV download API (hourly) + JSON POST (HTML/Chart.js inside, aggregations) | `https://umweltportal.mv-regierung.de/lung/lume/api/` | ✅ live |
-| NI Niedersachsen | LÜN | **documented** JSON file (30 days) | `https://www.luen-ni.de/json30m.txt` | ✅ live |
+| NI Niedersachsen | LÜN | **documented** JSON file (30 days) (implemented: `canairy.ni`) | `https://www.luen-ni.de/json30m.txt` | ✅ live |
 | NW Nordrhein-Westfalen | LANUK | **documented** REST JSON | `https://luftqualitaet.nrw.de/api/` | ✅ live |
 | RP Rheinland-Pfalz | ZIMEN | JSON index + CSV files (last 8 h) | `https://zimen.webraum.rlp.de/zimen/data.php` | ✅ live |
 | SL Saarland | IMMESA | HTML tables only (scraping) | `https://umweltserver.saarland.de/extern/luft/` | ⚠️ live, HTML only |
@@ -165,6 +165,9 @@ Most are frontend backends that may change without notice.
     `luftqualitaet` and a `verlauf` array (the 30-day history).
   - Test result: `datum: 24.11.2026`, `zeit: 14:00`, `zeitzone: UTC+1h`.
 - The data are marked provisional (not fully validated).
+- Implemented as `canairy.ni` (2026-11-25). The file now has a single `verlauf` per component
+  (`verlauf_indexwerte` was removed on 2026-09-21, per its `Dateihistorie`); values can be `***` (missing)
+  or `<x` (below the detection limit `x`), and `luftqualitaet` `0,00` marks a missing current value.
 
 ### Nordrhein-Westfalen (LANUK)
 

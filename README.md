@@ -23,6 +23,7 @@ Supported data sources:
 | `canairy.uba`  | [Umweltbundesamt](https://luftdaten.umweltbundesamt.de) (UBA), air-data API v4                | All of Germany, from 2016        |
 | `canairy.hh`   | [Hamburger Luftmessnetz](https://hamburg.luftmessnetz.de) (HH)                                | Hamburg, hourly/daily from 2012, monthly from 1984 |
 | `canairy.be`   | [Berliner Luftgütemessnetz](https://luftdaten.berlin.de) (BLUME, BE)                         | Berlin, hourly/daily back to the station start (1980s/90s) |
+| `canairy.ni`   | [Lufthygienisches Überwachungssystem Niedersachsen](https://www.luen-ni.de) (LÜN, NI)         | Niedersachsen, hourly, last 30 days only |
 
 More federal-state networks are planned.
 
@@ -162,6 +163,30 @@ be.get_station_data(
 Station codes look like `mc010` (EU code `DEBE010`). Berlin also offers
 12-month moving means (`*_12mg`, monthly, from 2019).
 
+### Lufthygienisches Überwachungssystem Niedersachsen (NI)
+
+LÜN has no queryable API. It publishes one documented JSON file with the hourly
+values of all stations over the last 30 days, updated every hour.
+`NIClient.get_data()` fetches and parses the whole file:
+
+```python
+from canairy.ni import NIClient
+
+data = NIClient().get_data()
+print(data.timestamp)                          # 2026-11-25 10:00:00+01:00
+print([s.code for s in data.stations][:3])     # ['BGSW', 'BGVT', 'BLWW']
+print([c.code for c in data.components][:3])   # ['PM1024', 'NO2', 'O3']
+
+no2 = data.get_series("BGSW", "NO2")
+for v in no2.values[-2:]:
+    print(v.datetime, v.value, v.detection_limit)
+# 2026-11-25 09:00:00+01:00 10.0 None
+# 2026-11-25 10:00:00+01:00 None None
+```
+
+Each `NISeries` holds 720 hourly `NIValue`s, oldest first. `PM1024` is PM10 as a
+moving 24-hour mean, `CO` an 8-hour mean; see `NIComponent.averaging`.
+
 ### Working with DataFrames
 
 All results are pydantic models, so they convert easily:
@@ -216,6 +241,16 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
   - In Berlin, a few virtual and internal stations (e.g. `vir-v`) have no EU
     code, address, coordinates or URL; these fields are `None`.
 
+- **NI**
+  - Only the last 30 days are available, and the data are provisional
+    (not fully validated). Collect the file regularly for longer series.
+  - Timestamps mark the *end* of the averaging interval, in German local time.
+  - Missing values (`***`) have `value=None`. Values below the detection
+    limit (`<2`) have `value=None` and `detection_limit=2.0`.
+  - `air_quality` is the current index of a pollutant (≤ 2 very good, > 6 very
+    bad); it is `None` for meteorological components and when the current
+    value is missing.
+
 ## Development
 
 ```sh
@@ -225,7 +260,7 @@ uv run ruff check src tests
 uv run mypy src
 
 # offline tests only
-uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore-glob='tests/uba/test_get_*.py'
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore=tests/ni/test_ni_client.py --ignore-glob='tests/uba/test_get_*.py'
 ```
 
 ## License
@@ -233,4 +268,5 @@ uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_clie
 BSD 3-Clause, © 2025 Institut für Angewandte Medizininformatik. See [LICENSE](https://github.com/UKEIAM/canairy/blob/develop/LICENSE).
 
 The data itself is provided by the Umweltbundesamt, the Hamburger
-Luftmessnetz and the Berliner Luftgütemessnetz under their respective terms of use.
+Luftmessnetz, the Berliner Luftgütemessnetz and the Lufthygienisches
+Überwachungssystem Niedersachsen under their respective terms of use.
