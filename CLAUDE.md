@@ -9,6 +9,7 @@ Python library (`canairy`, src layout) wrapping public air-quality APIs, plus a 
 - `canairy.hh` — Hamburg, Hamburger Luftmessnetz (`https://hamburg.luftmessnetz.de/api`)
 - `canairy.be` — Berlin, Berliner Luftgütemessnetz BLUME (`https://luftdaten.berlin.de/api`); same software and API as HH
 - `canairy.ni` — Niedersachsen, LÜN (`https://www.luen-ni.de/json30m.txt`); a single documented JSON file, not a queryable API
+- `canairy.nrw` — Nordrhein-Westfalen, LANUK (`https://luftqualitaet.nrw.de/api`), documented at `https://luftqualitaet.nrw.de/apidoku.php`
 - `canairy.uba` — Umweltbundesamt air-data v4 (`https://luftdaten.umweltbundesamt.de/api/air-data/v4`)
 
 The package is a pure API client: analysis code (data loading, exposure indices) lives outside this repository.
@@ -20,7 +21,7 @@ Dependencies are managed with `uv` (`uv.lock` is committed; dev tools are in the
 ```sh
 uv sync                                   # install incl. dev group
 uv run pytest                             # all tests, incl. live API integration tests
-uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore=tests/ni/test_ni_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore=tests/ni/test_ni_client.py --ignore=tests/nrw/test_nrw_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
 uv run pytest tests/uba/test_get_measures.py::<name>  # single test
 uv run coverage run -m pytest && uv run coverage report  # tests with coverage (config in pyproject.toml)
 uv run ruff check src tests               # lint
@@ -28,7 +29,7 @@ uv run mypy src                           # type check (pydantic mypy plugin ena
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py`, `tests/ni/test_ni_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/test_http.py`, `tests/uba/test_client.py`, `tests/uba/test_measures_limits.py`, `tests/scripts/`, `tests/ni/test_ni_models.py` and `tests/luftmessnetz/test_*.py` are offline; `tests/uba/test_utils.py` is not run by the integration job but its station-filter tests do hit the live API.
+Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py`, `tests/ni/test_ni_client.py`, `tests/nrw/test_nrw_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/test_http.py`, `tests/uba/test_client.py`, `tests/uba/test_measures_limits.py`, `tests/scripts/`, `tests/ni/test_ni_models.py`, `tests/nrw/test_nrw_models.py` and `tests/luftmessnetz/test_*.py` are offline; `tests/uba/test_utils.py` is not run by the integration job but its station-filter tests do hit the live API.
 
 ## Architecture
 
@@ -58,6 +59,15 @@ NI (Niedersachsen, LÜN) specifics:
 - The file is latin-1 without a charset header, so the client decodes `rsp.content` itself. Numbers are strings with a decimal comma. Values: `***` missing → `value=None`; `<x` below detection limit → `value=None`, `detection_limit=x`. `luftqualitaet` `0,00` means no current value → `air_quality=None`.
 - `verlauf` has 720 hourly values, oldest first; the last belongs to `datum`/`zeit`, local time with offset `zeitzone` (`UTC+1h`/`UTC+2h`), marking the end of the interval. Timestamps are stepped back in UTC and returned as Europe/Berlin aware datetimes.
 - The server sends `ETag`/`Last-Modified` but no `Cache-Control`; hishel caches it heuristically for a few minutes.
+
+NRW (Nordrhein-Westfalen, LANUK) specifics:
+- One `get_*` method per documented endpoint (`{BASE_URL}/<name>.php`), all in `canairy/nrw/_client.py`; models and params in `_models.py`. Params models use the German API names and join id lists with commas (`Ids`).
+- Measurement, AQI and ozone endpoints return positional arrays (default `index=array`; `index=obj` lowers the 3-million-row cap). Rows are zipped against the documented column tuples (`MEASUREMENT_COLUMNS`, `REFERENCE_MEASUREMENT_COLUMNS` for monthly/yearly/daily-8h-max, which add `mw_bezugszeit`, …); `RowModel.from_row` raises `ValueError` on a length mismatch. Column order is station, component, **matrix, method**, unit (the survey had matrix/method swapped).
+- Values below the detection limit come as `"<10"` in `messwert` → `value=None`, `below_detection_limit=True`; `rohwert` → `raw_value`. Missing intervals are absent rows, not nulls.
+- All times are CET (UTC+1) year-round, for requests and responses (checked with `zeitausgabe=unixtimestamp`; 29.03.2026 has a 02:00–03:00 row). Responses are parsed as aware `+01:00` datetimes and not converted, so day/month boundaries stay at midnight; request datetimes are converted with `to_cet` (naive = Europe/Berlin).
+- A range returns intervals lying completely within `[beginn, ende]`; `ende` must be after `beginn` (422 otherwise; the client checks first). `beginn` requires `ende` on measurement endpoints; without a range they return everything since 2019-12-31, so the client requires one.
+- Errors: HTTP 422 with `{"fehler": {"text": …}}` → `ValueError`; "Keine passenden Einträge gefunden" comes with HTTP 200 → `[]`.
+- Hourly data start 2019-12-31 (meteorology 2020-01-01), daily/monthly/yearly 2010; even 2025 hourly data were still `freigabe=0` (provisional) in Nov 2026. `Cache-Control: max-age=0`, so nothing is cached. No retry statuses (only dropped connections). The 3-million-row hint format is unknown (untested).
 
 UBA specifics:
 - Each endpoint has its own subpackage (`components/`, `measures/`, `networks/`, `scopes/`, `stations/`, `thresholds/`); public models carry a `UBA` prefix (e.g. `UBAComponentsGetResponse`). `uba/_models.py` holds shared bases; `uba/utils.py` has station filters and index-normalization helpers. URLs are `{BASE_URL}/{endpoint}/json`.

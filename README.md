@@ -24,6 +24,7 @@ Supported data sources:
 | `canairy.hh`   | [Hamburger Luftmessnetz](https://hamburg.luftmessnetz.de) (HH)                                | Hamburg, hourly/daily from 2012, monthly from 1984 |
 | `canairy.be`   | [Berliner Luftgütemessnetz](https://luftdaten.berlin.de) (BLUME, BE)                         | Berlin, hourly/daily back to the station start (1980s/90s) |
 | `canairy.ni`   | [Lufthygienisches Überwachungssystem Niedersachsen](https://www.luen-ni.de) (LÜN, NI)         | Niedersachsen, hourly, last 30 days only |
+| `canairy.nrw`  | [LANUK Nordrhein-Westfalen](https://luftqualitaet.nrw.de) (NRW)                               | NRW, hourly from 2020, daily/monthly/yearly from 2010 |
 
 More federal-state networks are planned.
 
@@ -187,6 +188,39 @@ for v in no2.values[-2:]:
 Each `NISeries` holds 720 hourly `NIValue`s, oldest first. `PM1024` is PM10 as a
 moving 24-hour mean, `CO` an 8-hour mean; see `NIComponent.averaging`.
 
+### Nordrhein-Westfalen (NRW)
+
+NRW publishes a [documented API](https://luftqualitaet.nrw.de/apidoku.php). Stations,
+components, methods, matrices, units and aggregations are numeric ids:
+
+```python
+from datetime import date, datetime
+
+from canairy.nrw import NRWClient
+
+nrw = NRWClient()
+
+nrw.get_components()          # 1 O3, 2 SO2, 3 NO2, 200 PM10, 201 PM2.5, …
+(station,) = nrw.get_stations(eu_code="DENW094", include_components=True)
+station.id, station.name      # (1, 'Aachen-Burtscheid')
+
+# Hourly NO₂ and PM10 at all stations; arguments taking ids also take lists
+data = nrw.get_hourly([3, 200], datetime(2026, 11, 24, 0), datetime(2026, 11, 24, 3))
+for m in data[:2]:
+    print(m.station, m.component, m.start, m.value, m.below_detection_limit)
+# 1 3 2026-11-24 00:00:00+01:00 21.597 False
+# 1 200 2026-11-24 00:00:00+01:00 15.341 False
+
+nrw.get_daily(200, date(2026, 11, 1), date(2026, 11, 3), station=1)
+nrw.get_yearly(3, [2024, 2025], station=1)
+```
+
+Measurements: `get_hourly`, `get_moving_8h`, `get_daily`, `get_daily_sums`,
+`get_daily_8h_max`, `get_4day`, `get_monthly`, `get_monthly_sums`, `get_yearly`,
+`get_yearly_sums`. Further: `get_availability` (first/last day with data per
+series), `get_pm10_exceedance_days`, `get_air_quality_index`,
+`get_total_air_quality_index` and `get_ozone_warnings`.
+
 ### Working with DataFrames
 
 All results are pydantic models, so they convert easily:
@@ -250,6 +284,20 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
   - `air_quality` is the current index of a pollutant (≤ 2 very good, > 6 very
     bad); it is `None` for meteorological components and when the current
     value is missing.
+- **NRW**
+  - Measurement methods return the intervals that lie completely within
+    `[start, end]`, so `end` is effectively exclusive: daily means from
+    1 to 3 November cover the 1st and 2nd. `start` must be before `end`.
+  - The API works in CET (UTC+1) all year. Results carry `+01:00`, so a
+    daily mean starts at midnight CET even in summer. Naive `start`/`end` are taken
+    as German local time, aware ones are converted.
+  - Values below the detection limit have `value=None` and
+    `below_detection_limit=True`; `raw_value` keeps the measured number.
+    Missing hours are absent rows. `validated` is `False` for provisional data.
+  - Station coordinates are UTM zone 32N (`utm_east`/`utm_north`, EPSG:25832).
+  - The API caps a response at 3 million rows. A response that does not
+    parse as rows raises `ValueError`; split large queries by station or time.
+  - Responses are not cached (`Cache-Control: max-age=0`).
 
 ## Development
 
@@ -260,7 +308,7 @@ uv run ruff check src tests
 uv run mypy src
 
 # offline tests only
-uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore=tests/ni/test_ni_client.py --ignore-glob='tests/uba/test_get_*.py'
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore=tests/ni/test_ni_client.py --ignore=tests/nrw/test_nrw_client.py --ignore-glob='tests/uba/test_get_*.py'
 ```
 
 ## License
@@ -268,5 +316,5 @@ uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_clie
 BSD 3-Clause, © 2025 Institut für Angewandte Medizininformatik. See [LICENSE](https://github.com/UKEIAM/canairy/blob/develop/LICENSE).
 
 The data itself is provided by the Umweltbundesamt, the Hamburger
-Luftmessnetz, the Berliner Luftgütemessnetz and the Lufthygienisches
-Überwachungssystem Niedersachsen under their respective terms of use.
+Luftmessnetz, the Berliner Luftgütemessnetz, the Lufthygienisches Überwachungssystem
+Niedersachsen and the LANUK Nordrhein-Westfalen under their respective terms of use.
