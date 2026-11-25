@@ -65,7 +65,7 @@ def download_multi_station(client, year_start: int, outpath: pathlib.Path) -> No
                 logger.info(f"Component: {component.code}")
                 res = client.get_measures(
                     datetime.datetime(year, 1, 1, 0, 0),
-                    datetime.datetime(year+1, 12, 31, 23, 0),
+                    datetime.datetime(year, 12, 31, 23, 0),
                     station.id,
                     component.id,
                     component.scope,

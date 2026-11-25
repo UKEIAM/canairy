@@ -185,14 +185,13 @@ time.
 
 A Docker image for the downloader lives in [`downloader/`](https://github.com/UKEIAM/canairy/tree/develop/downloader).
 
-> **Known issue:** each year is currently requested until 31 December of the *following* year, so
-> files of consecutive years overlap. Deduplicate after loading.
-
 ## Good to know
 
 - **Caching:** responses are cached in `.cache/hishel/hishel_cache_v2.db` under the current working
   directory for as long as the servers allow: 5 minutes for HH and BE and 3 hours
   for UBA, measurements included. Repeated calls within that time don't hit the API.
+  Other files in `.cache/hishel/`, left by canairy versions before the switch to hishel 2.0,
+  are no longer read and can be deleted.
 - **UBA**
   - `get_measures` needs a station; query one station at a time.
   - The API counts hours 1–24; `canairy` converts to regular 0–23 `datetime`s for you.

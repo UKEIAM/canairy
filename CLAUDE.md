@@ -57,7 +57,7 @@ UBA specifics:
 - Station rows arrive as flat dicts with prefixed keys (`"type …"`, `"network …"`, `"setting …"`), regrouped by `Station.from_flat_dict`. Pass `lang="en"` for English type/setting names.
 - `measures` without a `station` parameter fails (HTTP 500); query per station. Data starts 2016-01-01. The `meta` endpoint times out (504); `measures/limits` (not wrapped by the client) returns first/last date per scope × component × station in one fast call.
 
-`scripts/downloader.py` (`aq-downloader` entry point) iterates years × all UBA stations (all of Germany) × `DEFAULT_COMPONENTS` and pickles `model_dump(mode="json")` results to `<outpath>/<year>/<station_code>/<component>_<scope>.pkl`, logging to `<outpath>/download.log`. Known bug: each year requests up to `datetime(year+1, 12, 31)`, so consecutive years overlap.
+`scripts/downloader.py` (`aq-downloader` entry point) iterates years × all UBA stations (all of Germany) × `DEFAULT_COMPONENTS` and pickles `model_dump(mode="json")` results to `<outpath>/<year>/<station_code>/<component>_<scope>.pkl`, logging to `<outpath>/download.log`.
 
 
 ## Docker
