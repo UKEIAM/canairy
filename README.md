@@ -9,6 +9,7 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14%20%7C%203.15-blue)](https://github.com/UKEIAM/canairy/actions/workflows/tests.yml)
 [![Coverage](https://raw.githubusercontent.com/UKEIAM/canairy/coverage-badge/badge.svg)](https://github.com/UKEIAM/canairy/actions/workflows/tests.yml?query=branch%3Adevelop)
 [![License](https://img.shields.io/pypi/l/canairy)](https://github.com/UKEIAM/canairy/blob/develop/LICENSE)
+[![Docs](https://img.shields.io/badge/docs-ukeiam.github.io%2Fcanairy-blue)](https://ukeiam.github.io/canairy/)
 
 Typed Python clients for public German air-quality APIs.
 
@@ -26,8 +27,8 @@ Supported data sources:
 | `canairy.ni`   | [Lufthygienisches Überwachungssystem Niedersachsen](https://www.luen-ni.de) (LÜN, NI)         | Niedersachsen, hourly, last 30 days only |
 | `canairy.nrw`  | [LANUK Nordrhein-Westfalen](https://luftqualitaet.nrw.de) (NRW)                               | NRW, hourly from 2020, daily/monthly/yearly from 2010 |
 
-More federal-state networks are planned; [`docs/apis/index.md`](https://github.com/UKEIAM/canairy/blob/develop/docs/apis/index.md)
-surveys what each state offers. The documentation in [`docs/`](https://github.com/UKEIAM/canairy/tree/develop/docs)
+More federal-state networks are planned; the [survey of German air-quality APIs](https://ukeiam.github.io/canairy/apis/)
+covers what each state offers. The [documentation](https://ukeiam.github.io/canairy/)
 describes every client in detail, including its findings and limitations.
 
 ## Features

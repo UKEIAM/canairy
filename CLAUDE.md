@@ -82,7 +82,7 @@ UBA specifics:
 
 ## Documentation
 
-[Zensical](https://zensical.org) (`zensical.toml` at the root, pages in `docs/`, dependencies in the `docs` group). Build with `uv run --group docs zensical build --strict` (preview: `zensical serve`); strict mode aborts on broken links and anchors. CI runs the strict build in the lint job. `docs/apis/index.md` ("Air quality APIs in Germany") is the survey of all state networks; `docs/apis/<client>.md` holds everything known about each implemented client (usage, findings, limitations). Update these pages together with the code when behaviour or findings change.
+[Zensical](https://zensical.org) (`zensical.toml` at the root, pages in `docs/`, dependencies in the `docs` group). Build with `uv run --group docs zensical build --strict` (preview: `zensical serve`); strict mode aborts on broken links and anchors. CI runs the strict build in the lint job; `.github/workflows/docs.yml` builds and deploys the site to GitHub Pages (`https://ukeiam.github.io/canairy/`, `site_url` in `zensical.toml`) on pushes to `develop`. `docs/apis/index.md` ("Air quality APIs in Germany") is the survey of all state networks; `docs/apis/<client>.md` holds everything known about each implemented client (usage, findings, limitations). Update these pages together with the code when behaviour or findings change.
 
 ## CI
 
