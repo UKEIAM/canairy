@@ -28,13 +28,12 @@ Supported Python versions are 3.12–3.15; mypy checks against 3.12. Test anothe
 
 ## Documentation
 
-The documentation is built with [MkDocs](https://www.mkdocs.org) and
-[Material for MkDocs](https://squidfunk.github.io/mkdocs-material/); its dependencies are in
-the `docs` group.
+The documentation is built with [Zensical](https://zensical.org), configured in
+`zensical.toml`; its dependencies are in the `docs` group.
 
 ```sh
-uv run --group docs mkdocs serve           # preview at http://127.0.0.1:8000
-uv run --group docs mkdocs build --strict  # build into site/
+uv run --group docs zensical serve           # preview at http://127.0.0.1:8000
+uv run --group docs zensical build --strict  # build into site/, abort on broken links
 ```
 
 ## CI

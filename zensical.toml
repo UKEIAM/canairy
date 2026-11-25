@@ -1,0 +1,55 @@
+[project]
+site_name = "canairy"
+site_description = "Typed Python clients for public German air-quality APIs"
+copyright = "© 2025 Institut für Angewandte Medizininformatik"
+repo_url = "https://github.com/UKEIAM/canairy"
+repo_name = "UKEIAM/canairy"
+edit_uri = "edit/develop/docs/"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Air quality APIs in Germany" = [
+    "apis/index.md",
+    { "Umweltbundesamt (UBA)" = "apis/uba.md" },
+    { "Hamburg (HH)" = "apis/hh.md" },
+    { "Berlin (BE)" = "apis/be.md" },
+    { "Niedersachsen (NI)" = "apis/ni.md" },
+    { "Nordrhein-Westfalen (NRW)" = "apis/nrw.md" },
+  ] },
+  { "HTTP behaviour" = "http.md" },
+  { "Bulk download" = "downloader.md" },
+  { "Development" = "development.md" },
+]
+
+[project.theme]
+language = "en"
+logo = "assets/icon.svg"
+favicon = "assets/icon.svg"
+features = [
+  "content.code.copy",
+  "navigation.indexes",
+  "navigation.sections",
+  "navigation.top",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to light mode"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+tables = {}
+toc.permalink = true
+pymdownx.highlight = {}
+pymdownx.inlinehilite = {}
+pymdownx.superfences = {}
