@@ -40,7 +40,7 @@ pip install canairy
 uv add canairy
 ```
 
-Requires Python 3.12 or newer.
+Requires Python 3.12 or newer (tested on 3.12–3.15).
 
 > **Note:** `canairy` is pre-1.0. Expect breaking changes between minor versions.
 
@@ -190,7 +190,7 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
 
 ## Good to know
 
-- **Caching:** responses are cached in `.cache/hishel/` under the current working
+- **Caching:** responses are cached in `.cache/hishel/hishel_cache_v2.db` under the current working
   directory for as long as the servers allow: 5 minutes for HH and BE and 3 hours
   for UBA, measurements included. Repeated calls within that time don't hit the API.
 - **UBA**
