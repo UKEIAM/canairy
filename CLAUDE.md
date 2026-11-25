@@ -60,6 +60,10 @@ UBA specifics:
 `scripts/downloader.py` (`aq-downloader` entry point) iterates years × all UBA stations (all of Germany) × `DEFAULT_COMPONENTS` and pickles `model_dump(mode="json")` results to `<outpath>/<year>/<station_code>/<component>_<scope>.pkl`, logging to `<outpath>/download.log`.
 
 
+## CI
+
+`.github/workflows/tests.yml` (push to `develop`, PRs, manual): ruff + mypy; offline tests on 3.12–3.15; live integration tests once on 3.15 (not per version, to respect API rate limits). All jobs use `uv sync --locked`, so keep `uv.lock` in sync with `pyproject.toml`.
+
 ## Docker
 
 - `downloader/` (`build.zsh`, `run.zsh <host data dir>`): slim image `canairy_downloader` running `aq-downloader /data`.
