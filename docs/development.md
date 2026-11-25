@@ -44,3 +44,6 @@ uv run --group docs zensical build --strict  # build into site/, abort on broken
 - offline tests on Python 3.12–3.15
 - live integration tests once on Python 3.15 (not per version, to respect the APIs' rate limits)
 - combined coverage report; on pushes to `develop` it updates the README coverage badge
+
+`.github/workflows/docs.yml` builds the documentation on pushes to `develop` (and manually)
+and deploys it to GitHub Pages at <https://ukeiam.github.io/canairy/>.
