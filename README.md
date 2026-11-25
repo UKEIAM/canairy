@@ -26,7 +26,9 @@ Supported data sources:
 | `canairy.ni`   | [Lufthygienisches Überwachungssystem Niedersachsen](https://www.luen-ni.de) (LÜN, NI)         | Niedersachsen, hourly, last 30 days only |
 | `canairy.nrw`  | [LANUK Nordrhein-Westfalen](https://luftqualitaet.nrw.de) (NRW)                               | NRW, hourly from 2020, daily/monthly/yearly from 2010 |
 
-More federal-state networks are planned.
+More federal-state networks are planned; [`docs/apis/index.md`](https://github.com/UKEIAM/canairy/blob/develop/docs/apis/index.md)
+surveys what each state offers. The documentation in [`docs/`](https://github.com/UKEIAM/canairy/tree/develop/docs)
+describes every client in detail, including its findings and limitations.
 
 ## Features
 

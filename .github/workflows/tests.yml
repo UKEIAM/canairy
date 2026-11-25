@@ -18,9 +18,12 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv sync --locked
+      - run: uv sync --locked --group docs
       - run: uv run ruff check src tests
       - run: uv run mypy src
+      - run: uv run mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "1"
 
   offline:
     runs-on: ubuntu-latest
