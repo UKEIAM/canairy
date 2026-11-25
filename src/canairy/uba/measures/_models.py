@@ -127,3 +127,55 @@ class UBAMeasuresGetResponse(BaseResponse):
                 mm = Measurement.from_list(indices, values, date_start, int(station))
                 items.append(mm)
         return items
+
+
+EXPECTED_MEASURES_LIMITS_INDICES = [
+    "scope id",
+    "component id",
+    "station id",
+    "limit date start min",
+    "limit date start max",
+]
+
+
+class UBAMeasuresLimit(BaseModel):
+    """First and last measurement start of one scope/component/station."""
+
+    scope_id: int
+    component_id: int
+    station_id: int
+    date_start_min: datetime.datetime
+    date_start_max: datetime.datetime
+
+    @classmethod
+    def from_list_item(cls, item: RawDataSeq) -> Self:
+        return cls(**dict(zip(cls.model_fields.keys(), item, strict=True)))
+
+    def overlaps(self, start: datetime.datetime, end: datetime.datetime) -> bool:
+        """True if measurements may exist with a start time in [start, end]."""
+        return self.date_start_min <= end and self.date_start_max >= start
+
+
+class UBAMeasuresLimitsGetResponse(BaseResponse):
+    indices: list[str]
+    data: list[UBAMeasuresLimit]
+
+    @classmethod
+    def from_response(cls, response: dict[str, Any]) -> Self:
+        indices = next(iter(response["indices"].values()))
+        if indices != EXPECTED_MEASURES_LIMITS_INDICES:
+            raise ValueError(
+                "Unexpected column order in UBA measures limits response: "
+                f"got {indices!r}, expected {EXPECTED_MEASURES_LIMITS_INDICES!r}"
+            )
+        data = [
+            UBAMeasuresLimit.from_list_item(item)
+            for item in cls.iter_response_data(response)
+        ]
+        return cls(indices=indices, data=data)
+
+    def lookup(self) -> dict[tuple[int, int, int], UBAMeasuresLimit]:
+        """Index limits by ``(station_id, component_id, scope_id)``."""
+        return {
+            (lim.station_id, lim.component_id, lim.scope_id): lim for lim in self.data
+        }
