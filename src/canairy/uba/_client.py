@@ -3,8 +3,8 @@ import logging
 import time
 from typing import Any, Literal
 
-import httpx
-from hishel.httpx import SyncCacheClient
+import httpx2
+from hishel.httpx2 import CacheClient
 from ratelimit import limits, sleep_and_retry
 
 from ._models import BaseParams
@@ -27,7 +27,7 @@ class UBAClient:
     BASE_URL = "https://luftdaten.umweltbundesamt.de/api/air-data/v4"
 
     def __init__(self) -> None:
-        self._client = SyncCacheClient(timeout=60)
+        self._client = CacheClient(timeout=60, rfc=True)
 
     def get_stations(
         self,
@@ -125,9 +125,9 @@ def backoff(func, *args, **kwargs) -> Any:  # type: ignore
     for i in range(1, MAX_RETRIES):
         try:
             return func(*args, **kwargs).raise_for_status()
-        except httpx.RemoteProtocolError:
+        except httpx2.RemoteProtocolError:
             logger.debug(f"RemoteProtocolError: retry {i}")
-        except httpx.HTTPStatusError as exc:
+        except httpx2.HTTPStatusError as exc:
             if exc.response.status_code < 500 and exc.response.status_code != 429:
                 raise
             logger.debug(f"HTTPStatusError {exc.response.status_code}: retry {i}")

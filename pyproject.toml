@@ -25,8 +25,8 @@ classifiers = [
 
 requires-python = ">=3.12"
 dependencies = [
-    "hishel>=1.0",
-    "httpx>=0.28.1",
+    "hishel[httpx2]>=2.0",
+    "httpx2>=2.16.2",
     "pydantic>=2.11.3",
     "ratelimit>=2.2.1",
     "tzdata>=2026.5",

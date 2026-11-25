@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 import pytest
 
 from canairy._luftmessnetz import _client
@@ -18,7 +18,7 @@ def make_flaky(failures):
     def func():
         calls.append(1)
         if len(calls) <= failures:
-            raise httpx.RemoteProtocolError("dropped")
+            raise httpx2.RemoteProtocolError("dropped")
         return "ok"
 
     return func, calls
@@ -32,14 +32,14 @@ def test_backoff_returns_after_transient_errors():
 
 def test_backoff_reraises_when_retries_exhausted():
     func, calls = make_flaky(MAX_RETRIES)
-    with pytest.raises(httpx.RemoteProtocolError):
+    with pytest.raises(httpx2.RemoteProtocolError):
         backoff(func)
     assert len(calls) == MAX_RETRIES
 
 
 def test_backoff_does_not_sleep_after_last_attempt(sleeps):
     func, _ = make_flaky(MAX_RETRIES)
-    with pytest.raises(httpx.RemoteProtocolError):
+    with pytest.raises(httpx2.RemoteProtocolError):
         backoff(func)
     assert sleeps == [2**i for i in range(1, MAX_RETRIES)]
 
@@ -50,7 +50,7 @@ def test_backoff_without_retries_makes_one_attempt(monkeypatch, sleeps, max_retr
     func, calls = make_flaky(0)
     assert backoff(func) == "ok"
     func, calls = make_flaky(1)
-    with pytest.raises(httpx.RemoteProtocolError):
+    with pytest.raises(httpx2.RemoteProtocolError):
         backoff(func)
     assert len(calls) == 1
     assert sleeps == []
@@ -58,7 +58,7 @@ def test_backoff_without_retries_makes_one_attempt(monkeypatch, sleeps, max_retr
 
 def test_backoff_does_not_retry_other_errors():
     def func():
-        raise httpx.ConnectError("refused")
+        raise httpx2.ConnectError("refused")
 
-    with pytest.raises(httpx.ConnectError):
+    with pytest.raises(httpx2.ConnectError):
         backoff(func)
