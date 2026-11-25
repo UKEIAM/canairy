@@ -6,7 +6,7 @@ from pydantic import BaseModel, field_serializer, field_validator, Field
 
 from ._typing import GroupCodes_T, Periods_T, TimeSpans_T, StationGroup_T
 
-# The API reads request datetimes as local Hamburg time.
+# The API reads request datetimes as local German time (Europe/Berlin).
 BERLIN = ZoneInfo("Europe/Berlin")
 
 
@@ -19,7 +19,7 @@ class _ActiveParam(BaseParams):
 class _HiddenParam(BaseParams):
     include_hidden: bool | None = None
 
-class HHListParams(_ActiveParam, _HiddenParam):
+class ListParams(_ActiveParam, _HiddenParam):
     pass
 
 class ItemListModel(BaseParams):
@@ -29,7 +29,7 @@ class ItemListModel(BaseParams):
 
 
 
-class HHCore(ItemListModel):
+class Core(ItemListModel):
     code: str
     active: bool
     group: StationGroup_T
@@ -42,7 +42,7 @@ class HHCore(ItemListModel):
     components: list[str]
 
 
-class HHThreshold(ItemListModel):
+class Threshold(ItemListModel):
     active: bool
     code: str
     component: str
@@ -71,17 +71,18 @@ class DatetimeRangeParams(BaseParams):
         return dt.strftime("%d.%m.%Y %H:%M")
 
 
-class HHComponentParams(_ActiveParam):
+class ComponentParams(_ActiveParam):
     group_code: GroupCodes_T | None
 
 
-class HHStation(ItemListModel):
+class Station(ItemListModel):
     name: str
     code: str
-    code_eu: Annotated[str, Field(validation_alias="codeEu")]
-    address: str
-    lat: str
-    lng: str
+    # Berlin lists virtual and internal stations without these.
+    code_eu: Annotated[str | None, Field(validation_alias="codeEu")]
+    address: str | None
+    lat: str | None
+    lng: str | None
     active: bool
     stationgroups: list[str]
     measuring_start: Annotated[
@@ -89,7 +90,7 @@ class HHStation(ItemListModel):
     ]
     measuring_end: Annotated[datetime | None, Field(validation_alias="measuringEnd")]
     measuring_height: Annotated[int | None, Field(validation_alias="measuringHeight")]
-    url: str
+    url: str | None
     information: str | None
     components: list[str]
     active_components: Annotated[list[str], Field(validation_alias="activeComponents")]
@@ -98,7 +99,7 @@ class HHStation(ItemListModel):
     exceeds: list[str]
 
 
-class HHStationData(ItemListModel):
+class StationData(ItemListModel):
     datetime: datetime
     station: str
     core: str
@@ -107,12 +108,12 @@ class HHStationData(ItemListModel):
     value: float | None
 
 
-class HHComponentDataParams(DatetimeRangeParams):
+class ComponentDataParams(DatetimeRangeParams):
     stationgroup: str | None = None
     timespan: TimeSpans_T | None = None
 
 
-class HHComponentData(ItemListModel):
+class ComponentData(ItemListModel):
     datetime: datetime
     station: str
     core: str
@@ -121,7 +122,7 @@ class HHComponentData(ItemListModel):
     value: float | None
 
 
-class HHComponent(ItemListModel):
+class Component(ItemListModel):
     code: str
     core: str
     period: str
@@ -132,7 +133,7 @@ class HHComponent(ItemListModel):
     decimal_points: Annotated[int, Field(validation_alias="decimalPoints")]
 
 
-class HHStationDataParams(DatetimeRangeParams):
+class StationDataParams(DatetimeRangeParams):
     period: Periods_T
     timespan: TimeSpans_T
     core: str | None

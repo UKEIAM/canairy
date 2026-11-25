@@ -21,6 +21,7 @@ Supported data sources:
 | -------------- | --------------------------------------------------------------------------------------------- | -------------------------------- |
 | `canairy.uba`  | [Umweltbundesamt](https://luftdaten.umweltbundesamt.de) (UBA), air-data API v4                | All of Germany, from 2016        |
 | `canairy.hh`   | [Hamburger Luftmessnetz](https://hamburg.luftmessnetz.de) (HH)                                | Hamburg, hourly/daily from 2012, monthly from 1984 |
+| `canairy.be`   | [Berliner Luftgütemessnetz](https://luftdaten.berlin.de) (BLUME, BE)                         | Berlin, hourly/daily back to the station start (1980s/90s) |
 
 More federal-state networks are planned.
 
@@ -138,6 +139,28 @@ and `get_thresholds()`.
 `canairy.hh.aqi` contains the bins, thresholds and ratings of the German air
 quality index (Luftqualitätsindex) as used by the Hamburg network.
 
+### Berliner Luftgütemessnetz (BE)
+
+Berlin runs the same software as Hamburg, so `BEClient` has the same methods,
+parameters and behaviour as `HHClient`; its models carry a `BE` prefix
+(`BEStation`, `BEComponentData`, …).
+
+```python
+from datetime import datetime
+
+from canairy.be import BEClient
+
+be = BEClient()
+
+be.get_station_data(
+    "mc010", period="1h", timespan="custom",
+    start=datetime(2024, 1, 1), end=datetime(2024, 1, 1, 3), core="no2",
+)
+```
+
+Station codes look like `mc010` (EU code `DEBE010`). Berlin also offers
+12-month moving means (`*_12mg`, monthly, from 2019).
+
 ### Working with DataFrames
 
 All results are pydantic models, so they convert easily:
@@ -168,13 +191,13 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
 ## Good to know
 
 - **Caching:** responses are cached in `.cache/hishel/` under the current working
-  directory for as long as the servers allow: 5 minutes for HH and 3 hours for
-  UBA, measurements included. Repeated calls within that time don't hit the API.
+  directory for as long as the servers allow: 5 minutes for HH and BE and 3 hours
+  for UBA, measurements included. Repeated calls within that time don't hit the API.
 - **UBA**
   - `get_measures` needs a station; query one station at a time.
   - The API counts hours 1–24; `canairy` converts to regular 0–23 `datetime`s for you.
   - Data starts on 2016-01-01.
-- **HH**
+- **HH and BE** (same API)
   - The API silently shortens long ranges, keeping the *latest* 31 days for
     `1h`, `8hg` and `24hg` and the latest 365 days for `24h`. With
     `timespan="custom"`, `get_station_data` and `get_component_data` split
@@ -182,13 +205,16 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
     data costs about 12 requests. Other timespans are not split, and passing
     `start`/`end` with them raises `ValueError`; `get_component_data` treats
     `start`/`end` without a timespan as custom.
-  - A missing `end` means now in Hamburg. A `start` after `end` raises
+  - A missing `end` means now in Germany. A `start` after `end` raises
     `ValueError`; an open range that starts in the future returns `[]`.
-  - Times are local (Europe/Berlin). Naive `start`/`end` are taken as Hamburg
-    time and aware ones are converted, so a timestamp from a previous result can
+  - Times are local (Europe/Berlin). Naive `start`/`end` are taken as German
+    local time and aware ones are converted, so a timestamp from a previous result can
     be passed back as is. Results carry `+01:00`/`+02:00` offsets.
   - Rows come newest first.
-  - `timespan="all"` on station data only returns the last 12 months.
+  - `timespan="all"` on station data does not return everything: in Hamburg
+    the last 12 months, in Berlin (`period="1h"`) the last month.
+  - In Berlin, a few virtual and internal stations (e.g. `vir-v`) have no EU
+    code, address, coordinates or URL; these fields are `None`.
 
 ## Development
 
@@ -199,12 +225,12 @@ uv run ruff check src tests
 uv run mypy src
 
 # offline tests only
-uv run pytest --ignore=tests/hh/test_hh_client.py --ignore-glob='tests/uba/test_get_*.py'
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore-glob='tests/uba/test_get_*.py'
 ```
 
 ## License
 
 BSD 3-Clause, © 2025 Institut für Angewandte Medizininformatik. See [LICENSE](https://github.com/UKEIAM/canairy/blob/develop/LICENSE).
 
-The data itself is provided by the Umweltbundesamt and the Hamburger
-Luftmessnetz under their respective terms of use.
+The data itself is provided by the Umweltbundesamt, the Hamburger
+Luftmessnetz and the Berliner Luftgütemessnetz under their respective terms of use.

@@ -1,7 +1,8 @@
 import httpx
 import pytest
 
-from canairy.hh import HHClient, _client
+from canairy._luftmessnetz import _client
+from canairy.hh import HHClient
 
 
 @pytest.fixture(autouse=True)

@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Python library (`canairy`, src layout) wrapping public air-quality APIs, plus a bulk-download CLI. Two API clients exist:
+Python library (`canairy`, src layout) wrapping public air-quality APIs, plus a bulk-download CLI. Three API clients exist:
 
 - `canairy.hh` — Hamburg, Hamburger Luftmessnetz (`https://hamburg.luftmessnetz.de/api`)
+- `canairy.be` — Berlin, Berliner Luftgütemessnetz BLUME (`https://luftdaten.berlin.de/api`); same software and API as HH
 - `canairy.uba` — Umweltbundesamt air-data v4 (`https://luftdaten.umweltbundesamt.de/api/air-data/v4`)
 
 The package is a pure API client: analysis code (data loading, exposure indices) lives outside this repository.
@@ -18,32 +19,34 @@ Dependencies are managed with `uv` (`uv.lock` is committed; dev tools are in the
 ```sh
 uv sync                                   # install incl. dev group
 uv run pytest                             # all tests, incl. live API integration tests
-uv run pytest --ignore=tests/hh/test_hh_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
 uv run pytest tests/uba/test_get_measures.py::<name>  # single test
 uv run ruff check src tests               # lint
 uv run mypy src                           # type check (pydantic mypy plugin enabled)
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/hh/test_hh_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py`, `tests/uba/test_backoff.py` and the other `tests/hh/test_*.py` files are offline.
+Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py`, `tests/uba/test_backoff.py` and `tests/luftmessnetz/test_*.py` are offline.
 
 ## Architecture
 
-Both clients share the same shape, implemented independently per package (no shared base module):
+The luftmessnetz clients (HH, BE) and the UBA client share the same shape, implemented independently (no base module shared between luftmessnetz and UBA):
 
 - A client class with typed public `get_*` methods. Each builds a pydantic `*Params` model, calls `_get`, and parses the JSON via a `from_response` classmethod on a response model.
 - `_get` dumps params with `model_dump(exclude_none=True)`, is rate-limited with `ratelimit` (`@sleep_and_retry @limits(120, period=60)`), and wraps the request in a module-level `backoff()` (exponential `2**i` s, `MAX_RETRIES = 8`). Retry behaviour differs per client, see below; neither retries timeouts or connect errors.
 - HTTP goes through a `hishel.httpx.SyncCacheClient` (timeout 60 s), so repeated calls may be served from cache.
 - `_typing.py` holds `Literal` aliases for allowed API parameter values; `_models.py` holds pydantic params/response models.
 
-HH (Hamburg) specifics:
-- Responses are lists of objects; public models carry an `HH` prefix (e.g. `HHStation`), subclass `ItemListModel` and use `validation_alias` for camelCase fields.
+Luftmessnetz (HH Hamburg, BE Berlin) specifics:
+- Both networks run the same software; their Swagger specs (`/api/doc`) are identical apart from title. All code lives in the private `canairy._luftmessnetz` package (`LuftmessnetzClient`, neutral model names like `Station`). `canairy.hh`/`canairy.be` only subclass the client with a `BASE_URL` and re-export the models under `HH`/`BE`-prefixed aliases (`HHStation is BEStation`). Offline tests for the shared code are in `tests/luftmessnetz/`.
+- Responses are lists of objects; models subclass `ItemListModel` and use `validation_alias` for camelCase fields.
 - `_get` sends a single GET per call (all endpoints answer with a content-length; there is no HEAD probe or streaming path).
 - `backoff()` retries only `httpx.RemoteProtocolError` and re-raises the last error once retries are exhausted.
 - Datetimes are serialized as `%d.%m.%Y %H:%M` and interpreted as Europe/Berlin local time; `DatetimeRangeParams` converts aware datetimes to naive Berlin time (naive ones are taken as Berlin time). Responses carry `+01:00`/`+02:00` offsets.
-- **Silent truncation:** the API moves a custom `start` forward to `end - 31 days` for `1h`, `8hg`, `24hg` and `end - 365 days` for `24h` (local calendar days, both ends inclusive, so usually 745/366 timestamps), with HTTP 200 and no hint in the response. The spec at `/api/doc` only mentions "1 month" for `1h`/`24hg` and "1 year" for `24h`; `8hg` and the exact day counts were measured; they are fixed day counts, not calendar months (end `06.03.2025` moves start to `03.02.2025`, not `06.02.`). `RANGE_LIMITS` and `split_range` in `_client.py` encode this; `_get_data` requests custom ranges window by window (newest first) and drops the boundary row the windows share, keyed on `(datetime, station, component)`. For `get_component_data` the period comes from the code suffix (`pm10_1h` → `1h`, case-insensitive like the API); an unknown suffix only fails for custom ranges. Non-custom timespans (`lastyear`, `all`, …) are passed through unsplit and have not been probed for limits; neither have `1m`/`1y`/`*aot40`.
+- **Silent truncation** (measured on HH and BE, identical): the API moves a custom `start` forward to `end - 31 days` for `1h`, `8hg`, `24hg` and `end - 365 days` for `24h` (local calendar days, both ends inclusive, so usually 745/366 timestamps), with HTTP 200 and no hint in the response. The spec at `/api/doc` only mentions "1 month" for `1h`/`24hg` and "1 year" for `24h`; `8hg` and the exact day counts were measured; they are fixed day counts, not calendar months (end `06.03.2025` moves start to `03.02.2025`, not `06.02.`). `RANGE_LIMITS` and `split_range` in `_client.py` encode this; `_get_data` requests custom ranges window by window (newest first) and drops the boundary row the windows share, keyed on `(datetime, station, component)`. For `get_component_data` the period comes from the code suffix (`pm10_1h` → `1h`, case-insensitive like the API); an unknown suffix only fails for custom ranges. Non-custom timespans (`lastyear`, `all`, …) are passed through unsplit and have not been probed for limits; neither have `1m`/`1y`/`*aot40`.
 - Data rows come newest first, sorted by datetime across all stations/components (not grouped by component).
-- Hourly/daily data start 2012-01-01; `*_1m` monthly means go back to 1984. `timespan="all"` on station data returns only the last 12 months.
+- HH: hourly/daily data start 2012-01-01; `*_1m` monthly means go back to 1984. `timespan="all"` on station data returns only the last 12 months.
+- BE: hourly/daily data go back to the station start (e.g. 1995 for `mc174`); `timespan="all"` with `period=1h` returned only the last month. BE has an extra period `12mg` (12-month moving mean, monthly rows, from 2019-01, not truncated) and station group `suburb`. Some BE stations (virtual `vir-*`, internal `*-vgl`, `fub-ifm`, `mw088`) have null `codeEu`/`address`/`lat`/`lng`/`url`, hence the optional fields on `Station`.
 - `aqi.py` contains static German AQI bins/thresholds/ratings, not API calls.
 
 UBA specifics:
