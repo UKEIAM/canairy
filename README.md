@@ -6,7 +6,7 @@
 </h1>
 
 [![PyPI](https://img.shields.io/pypi/v/canairy)](https://pypi.org/project/canairy/)
-[![Python](https://img.shields.io/pypi/pyversions/canairy)](https://pypi.org/project/canairy/)
+[![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14%20%7C%203.15-blue)](https://github.com/UKEIAM/canairy/actions/workflows/tests.yml)
 [![License](https://img.shields.io/pypi/l/canairy)](https://github.com/UKEIAM/canairy/blob/develop/LICENSE)
 
 Typed Python clients for public German air-quality APIs.
