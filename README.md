@@ -286,6 +286,9 @@ A Docker image for the downloader lives in [`downloader/`](https://github.com/UK
   - `air_quality` is the current index of a pollutant (≤ 2 very good, > 6 very
     bad); it is `None` for meteorological components and when the current
     value is missing.
+  - LÜN alternates between two file formats; one also carries the hourly index
+    history (`NIValue.air_quality`), the other only the current index. The
+    client reads both.
 - **NRW**
   - Measurement methods return the intervals that lie completely within
     `[start, end]`, so `end` is effectively exclusive: daily means from

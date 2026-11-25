@@ -34,7 +34,7 @@ for v in no2.values[-2:]:
 | `NIStation` | `code` (`BGSW`), `code_eu` (`DENI011`), `name`, `location`, `street`, `lat`, `lng`, `altitude`, `area`, `type`, `representativeness` |
 | `NIComponent` | `code`, `name`, `unit`, `averaging` (e.g. "Einstundenmittelwert") |
 | `NISeries` | `station`, `component`, `air_quality`, `values` (720 × `NIValue`, oldest first) |
-| `NIValue` | `datetime`, `value`, `detection_limit` |
+| `NIValue` | `datetime`, `value`, `detection_limit`, `air_quality` (hourly index, only in the documented format) |
 
 ### Components
 
@@ -60,16 +60,23 @@ Not every station measures every component (e.g. 20 of 28 stations measure ozone
 - **Values:**
     - `***` (missing) → `value=None`.
     - `<2` (below the detection limit 2) → `value=None`, `detection_limit=2.0`.
-- **Air quality index:** `luftqualitaet` is the current index of a pollutant (≤ 2 very good,
-  ≤ 3 good, ≤ 4 satisfactory, ≤ 5 sufficient, ≤ 6 bad, > 6 very bad). `0,00` marks a missing
-  current value → `air_quality=None`; meteorological components have none.
+- **Air quality index** of a pollutant: ≤ 2 very good, ≤ 3 good, ≤ 4 satisfactory, ≤ 5
+  sufficient, ≤ 6 bad, > 6 very bad. `NISeries.air_quality` is the current index: `luftqualitaet`
+  in the newer format, the newest hourly index in the documented one. `0,00` or `***` mark a
+  missing current value → `None`; meteorological components have none.
 - **Time stamps:** each `verlauf` has 720 hourly values, oldest first; the last belongs to the
   file's `datum`/`zeit`, local time with the offset given in `zeitzone` (`UTC+1h` or `UTC+2h`).
   Timestamps mark the **end** of the averaging interval. The client steps back in UTC, so the
   hours stay evenly spaced across DST changes, and returns Europe/Berlin aware datetimes.
-- **Outdated documentation:** the PDF still describes `verlauf_stundenwerte` and
-  `verlauf_indexwerte`. The file has a single `verlauf` per component since
-  `verlauf_indexwerte` was removed on 2026-09-21; its `Dateihistorie` lists such changes.
-  `PM1024` replaced `PM10` on 2022-09-16.
+- **Two file formats, alternating.** On 2026-11-25 the file switched between them within an
+  hour, so both must be expected at any time; the client reads both:
+
+    | | Documented format | Newer format |
+    |---|---|---|
+    | Hourly values | `verlauf_stundenwerte` | `verlauf` |
+    | Air quality index | `verlauf_indexwerte` (720 hourly values) | `luftqualitaet` (current value only) |
+    | `Dateihistorie` | ends with the 2024-01-08 entry | adds "21.09.2026-SK: verlauf_indexwerte entfernt" |
+
+    The PDF describes the documented format. `PM1024` replaced `PM10` on 2022-09-16 in both.
 - **Caching:** the server sends `ETag`/`Last-Modified` but no `Cache-Control`; the cache keeps
   the file for a few minutes (heuristic freshness).
