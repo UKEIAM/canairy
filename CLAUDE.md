@@ -8,6 +8,7 @@ Python library (`canairy`, src layout) wrapping public air-quality APIs, plus a 
 
 - `canairy.hh` — Hamburg, Hamburger Luftmessnetz (`https://hamburg.luftmessnetz.de/api`)
 - `canairy.be` — Berlin, Berliner Luftgütemessnetz BLUME (`https://luftdaten.berlin.de/api`); same software and API as HH
+- `canairy.ni` — Niedersachsen, LÜN (`https://www.luen-ni.de/json30m.txt`); a single documented JSON file, not a queryable API
 - `canairy.uba` — Umweltbundesamt air-data v4 (`https://luftdaten.umweltbundesamt.de/api/air-data/v4`)
 
 The package is a pure API client: analysis code (data loading, exposure indices) lives outside this repository.
@@ -19,7 +20,7 @@ Dependencies are managed with `uv` (`uv.lock` is committed; dev tools are in the
 ```sh
 uv sync                                   # install incl. dev group
 uv run pytest                             # all tests, incl. live API integration tests
-uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore=tests/ni/test_ni_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
 uv run pytest tests/uba/test_get_measures.py::<name>  # single test
 uv run coverage run -m pytest && uv run coverage report  # tests with coverage (config in pyproject.toml)
 uv run ruff check src tests               # lint
@@ -27,7 +28,7 @@ uv run mypy src                           # type check (pydantic mypy plugin ena
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/test_http.py`, `tests/uba/test_client.py`, `tests/uba/test_measures_limits.py`, `tests/scripts/` and `tests/luftmessnetz/test_*.py` are offline; `tests/uba/test_utils.py` is not run by the integration job but its station-filter tests do hit the live API.
+Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py`, `tests/ni/test_ni_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/test_http.py`, `tests/uba/test_client.py`, `tests/uba/test_measures_limits.py`, `tests/scripts/`, `tests/ni/test_ni_models.py` and `tests/luftmessnetz/test_*.py` are offline; `tests/uba/test_utils.py` is not run by the integration job but its station-filter tests do hit the live API.
 
 ## Architecture
 
@@ -51,6 +52,12 @@ Luftmessnetz (HH Hamburg, BE Berlin) specifics:
 - HH: hourly/daily data start 2012-01-01; `*_1m` monthly means go back to 1984. `timespan="all"` on station data returns only the last 12 months.
 - BE: hourly/daily data go back to the station start (e.g. 1995 for `mc174`); `timespan="all"` with `period=1h` returned only the last month. BE has an extra period `12mg` (12-month moving mean, monthly rows, from 2019-01, not truncated) and station group `suburb`. Some BE stations (virtual `vir-*`, internal `*-vgl`, `fub-ifm`, `mw088`) have null `codeEu`/`address`/`lat`/`lng`/`url`, hence the optional fields on `Station`.
 - `aqi.py` contains static German AQI bins/thresholds/ratings, not API calls.
+
+NI (Niedersachsen, LÜN) specifics:
+- `NIClient.get_data()` fetches the whole ~1 MB file `json30m.txt` (documented in the appendix of `https://www.umwelt.niedersachsen.de/download/60236`; the doc is partly outdated, e.g. it still names `verlauf_stundenwerte`/`verlauf_indexwerte`, while the file has `verlauf` since 2026-09, see its `Dateihistorie`) and parses it into `NIData` (`canairy/ni/_models.py`). No other LÜN endpoints are used; the website's "Messwertarchiv" (90 days, CSV) is an undocumented frontend.
+- The file is latin-1 without a charset header, so the client decodes `rsp.content` itself. Numbers are strings with a decimal comma. Values: `***` missing → `value=None`; `<x` below detection limit → `value=None`, `detection_limit=x`. `luftqualitaet` `0,00` means no current value → `air_quality=None`.
+- `verlauf` has 720 hourly values, oldest first; the last belongs to `datum`/`zeit`, local time with offset `zeitzone` (`UTC+1h`/`UTC+2h`), marking the end of the interval. Timestamps are stepped back in UTC and returned as Europe/Berlin aware datetimes.
+- The server sends `ETag`/`Last-Modified` but no `Cache-Control`; hishel caches it heuristically for a few minutes.
 
 UBA specifics:
 - Each endpoint has its own subpackage (`components/`, `measures/`, `networks/`, `scopes/`, `stations/`, `thresholds/`); public models carry a `UBA` prefix (e.g. `UBAComponentsGetResponse`). `uba/_models.py` holds shared bases; `uba/utils.py` has station filters and index-normalization helpers. URLs are `{BASE_URL}/{endpoint}/json`.
