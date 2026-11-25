@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from canairy.hh import HHClient
-from canairy.hh._models import HHComponentDataParams, HHStationDataParams
+from canairy._luftmessnetz._models import ComponentDataParams, StationDataParams
 
 
 def make_row(dt, component="no2_1h"):
@@ -13,7 +13,7 @@ def make_row(dt, component="no2_1h"):
 
 
 def make_params(start, end, timespan="custom"):
-    return HHStationDataParams(
+    return StationDataParams(
         period="1h", timespan=timespan, start=start, end=end, core=None
     )
 
@@ -163,7 +163,7 @@ def test_get_data_treats_range_without_timespan_as_custom(monkeypatch):
         return []
 
     monkeypatch.setattr(client, "_get", fake_get)
-    params = HHComponentDataParams(start=datetime(2024, 1, 1), end=datetime(2024, 12, 31))
+    params = ComponentDataParams(start=datetime(2024, 1, 1), end=datetime(2024, 12, 31))
     client._get_data("components/no2_1h/data", params, "1h")
     assert len(calls) > 1
     assert all(call.timespan == "custom" for call in calls)

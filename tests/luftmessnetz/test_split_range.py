@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from canairy.hh._client import RANGE_LIMITS, split_range
+from canairy._luftmessnetz._client import RANGE_LIMITS, split_range
 
 
 def test_range_within_limit_is_not_split():

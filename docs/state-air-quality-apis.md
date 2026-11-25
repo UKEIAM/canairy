@@ -13,7 +13,7 @@ Most are frontend backends that may change without notice.
 |---|---|---|---|---|
 | BW Baden-Württemberg | LUBW | JSON (LUPO frontend backend) | `https://lupo-cloud.de/air-app/` | ✅ live |
 | BY Bayern | LfU / LÜB | static CSV per station × component | `https://www.lfu.bayern.de/_data_extern/luft/immissionsmessungen/csv/` | ✅ live |
-| BE Berlin | BLUME | REST JSON, same software as HH, Swagger docs | `https://luftdaten.berlin.de/api` | ✅ live |
+| BE Berlin | BLUME | REST JSON, same software as HH (implemented: `canairy.be`) | `https://luftdaten.berlin.de/api` | ✅ live |
 | BB Brandenburg | LfU BB | CSV export (Liferay portlet), current hour only | `https://luftdaten.brandenburg.de/luftguete?...exportCsv` | ✅ live |
 | HB Bremen | BLUES | CSV export (luftmessnetz frontend, like HH; no `/api`) | `https://bremen.luftmessnetz.de/station/<code>.csv` | ✅ live |
 | HH Hamburg | HamburgerLuftmessnetz | REST JSON (already implemented: `canairy.hh`) | `https://hamburg.luftmessnetz.de/api` | ✅ live |
@@ -30,8 +30,8 @@ Most are frontend backends that may change without notice.
 
 ### Shared platforms (one client could cover several states)
 
-- **luftmessnetz software** (HH, BE, HB): HH and BE expose the same `/api` (Swagger at `/api/doc`), so
-  `canairy.hh` should mostly work against Berlin by swapping `BASE_URL`. Bremen runs the same frontend
+- **luftmessnetz software** (HH, BE, HB): HH and BE expose the same `/api` (Swagger at `/api/doc`);
+  both clients share `canairy._luftmessnetz` and differ only in `BASE_URL`. Bremen runs the same frontend
   but answers `/api/*` with 404, so only its CSV export is available.
   - Vendor: **Faibl GmbH** (Hamburg), product "Luftmessnetz Online" (`https://luftmessnetz.de/`, checked
     2026-11-25). The product page lists Berlin, Hamburg and Bremen as references; the Berlin
@@ -43,8 +43,8 @@ Most are frontend backends that may change without notice.
     and the asset cache-busters of HH and BE differ by 2 s (both deployed 2026-11-18 13:11 UTC).
   - Hamburg's Content-Security-Policy still allows `*.berlin.de`, which suggests the code was first built
     for Berlin (inference, not documented).
-  - Other networks that buy the product with the API enabled could likely be served by the same client
-    with a different `BASE_URL`.
+  - Other networks that buy the product with the API enabled could likely be added like `canairy.be`
+    (a subclass with a new `BASE_URL`).
 - **LUPO cloud** (BW, ST, TH): `https://lupo-cloud.de/<prefix>/{stations,station,table}` with
   prefixes `air-app` (BW), `st-air-app` (ST), `th-air-app` (TH). The response shapes differ slightly
   between BW and ST/TH.
@@ -81,9 +81,13 @@ Most are frontend backends that may change without notice.
 - `GET /api/stations` → list with `code` (`mc010`), `codeEu` (`DEBE010`), coordinates, `measuringStart`.
 - `GET /api/components` → codes like `pm10_1h`, `no2_1h`, with `core`/`period`.
 - `GET /api/components/no2_1h/data` → `[{"datetime":"2026-11-24T13:00:00+01:00","station":"mc117","core":"no2","component":"no2_1h","period":"1h","value":12.0},…]`
-- `GET /api/stations/mc010/data?timespan=last24h&period=1h` → `[]`. The parameter names may differ from the
-  HH client's; check against `/api/doc`.
-- Whether Berlin has the same silent range truncation as HH (`RANGE_LIMITS`) has not been checked.
+- `GET /api/stations/mc010/data?timespan=last24h&period=1h` → `[]` because `last24h` is not a valid timespan;
+  `timespan=lastday` returns data. The Swagger spec is identical to Hamburg's apart from title/description.
+- Silent range truncation is the same as HH (checked 2026-11-24): 745 timestamps for `1h`/`8hg`/`24hg`,
+  366 for `24h`; `1m`, `1y` and `12mg` are not truncated.
+- Differences from HH: extra period `12mg` (from 2019-01), station group `suburb`, a few stations with
+  null `codeEu`/`address`/`lat`/`lng`/`url`, hourly data back to the station start (1990s).
+- Implemented as `canairy.be.BEClient`.
 
 ### Brandenburg (LfU Brandenburg)
 

@@ -1,8 +1,8 @@
 import httpx
 import pytest
 
-from canairy.hh import _client
-from canairy.hh._client import MAX_RETRIES, backoff
+from canairy._luftmessnetz import _client
+from canairy._luftmessnetz._client import MAX_RETRIES, backoff
 
 
 @pytest.fixture(autouse=True)
