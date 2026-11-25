@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 import pytest
 
 from canairy._luftmessnetz import _client
@@ -12,7 +12,7 @@ def no_sleep(monkeypatch):
 
 def make_client(handler):
     client = HHClient()
-    client._client = httpx.Client(transport=httpx.MockTransport(handler))
+    client._client = httpx2.Client(transport=httpx2.MockTransport(handler))
     return client
 
 
@@ -21,7 +21,7 @@ def test_get_sends_a_single_get_request():
 
     def handler(request):
         requests.append(request.method)
-        return httpx.Response(200, json=[])
+        return httpx2.Response(200, json=[])
 
     assert make_client(handler)._get("cores") == []
     assert requests == ["GET"]
@@ -33,8 +33,8 @@ def test_get_retries_dropped_connections():
     def handler(request):
         requests.append(request.method)
         if len(requests) == 1:
-            raise httpx.RemoteProtocolError("dropped")
-        return httpx.Response(200, json=[{"code": "no2"}])
+            raise httpx2.RemoteProtocolError("dropped")
+        return httpx2.Response(200, json=[{"code": "no2"}])
 
     assert make_client(handler)._get("cores") == [{"code": "no2"}]
     assert requests == ["GET", "GET"]

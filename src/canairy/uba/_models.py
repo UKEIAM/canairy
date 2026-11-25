@@ -1,4 +1,5 @@
-from typing import Any, Generator, Self
+from collections.abc import Generator
+from typing import Any, Self
 
 from pydantic import BaseModel
 
@@ -15,8 +16,7 @@ class BaseResponse(BaseModel):
         response: dict[str, dict[str, T]],
     ) -> Generator[T, None, None]:
         if data := response.get("data"):
-            for val in data.values():
-                yield val
+            yield from data.values()
         else:
             raise AttributeError("Response is missing `data` attribute")
 

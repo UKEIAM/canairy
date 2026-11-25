@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 import pytest
 
 from canairy.be import BEClient
@@ -17,9 +17,9 @@ def test_client_requests_its_network(cls, base_url):
 
     def handler(request):
         urls.append(str(request.url))
-        return httpx.Response(200, json=[])
+        return httpx2.Response(200, json=[])
 
     client = cls()
-    client._client = httpx.Client(transport=httpx.MockTransport(handler))
+    client._client = httpx2.Client(transport=httpx2.MockTransport(handler))
     assert client.get_cores() == []
     assert urls == [f"{base_url}/cores"]

@@ -1,13 +1,15 @@
 import argparse
 import datetime
+import logging
 import pathlib
 import pickle
-import logging
 import sys
 
 from pydantic import BaseModel
 
 from canairy.uba import UBAClient
+
+logger = logging.getLogger(__name__)
 
 
 class Component(BaseModel):
@@ -49,21 +51,21 @@ def main(argv=None) -> int:
 def download_multi_station(client, year_start: int, outpath: pathlib.Path) -> None:
 
     for year in range(year_start, datetime.date.today().year): 
-        logging.info(f"New year: {year}")
+        logger.info(f"New year: {year}")
         date_dir = outpath.joinpath(str(year))
         if not date_dir.exists():
             date_dir.mkdir(parents=True)
 
         for station in client.get_stations().data:
-            logging.info(f"Station: {station.code}")
+            logger.info(f"Station: {station.code}")
             station_dir = date_dir.joinpath(f"{station.code}")
             if not station_dir.exists():
                 station_dir.mkdir()
             for component in DEFAULT_COMPONENTS:
-                logging.info(f"Component: {component.code}")
+                logger.info(f"Component: {component.code}")
                 res = client.get_measures(
                     datetime.datetime(year, 1, 1, 0, 0),
-                    datetime.datetime(year+1, 12, 31, 23, 0),
+                    datetime.datetime(year, 12, 31, 23, 0),
                     station.id,
                     component.id,
                     component.scope,

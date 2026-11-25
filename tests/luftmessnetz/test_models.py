@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
@@ -26,7 +26,7 @@ def test_data_rows_accept_null_and_float_values(model):
 
 def test_aware_range_is_converted_to_naive_berlin_time():
     params = ComponentDataParams(
-        start=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        start=datetime(2025, 1, 1, tzinfo=UTC),
         end=datetime(2025, 7, 1, 12, tzinfo=timezone(timedelta(hours=2))),
     )
     assert params.start == datetime(2025, 1, 1, 1)

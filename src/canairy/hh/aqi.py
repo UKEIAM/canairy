@@ -1,4 +1,4 @@
-__all__ = ["components", "clf_bins", "clf_thresholds", "ratings"]
+__all__ = ["clf_bins", "clf_thresholds", "components", "ratings"]
 
 
 components = ("no2_1h", "so2_1h", "o3_1h", "co_8hg", "pm10_24hg")

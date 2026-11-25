@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 import pytest
 
 from canairy.uba import _client
@@ -17,12 +17,12 @@ def make_flaky(failures, error=None):
 
     def func():
         calls.append(1)
-        request = httpx.Request("GET", "https://example.org")
+        request = httpx2.Request("GET", "https://example.org")
         if len(calls) <= failures:
             if error is None:
-                raise httpx.RemoteProtocolError("dropped")
-            return httpx.Response(error, request=request)
-        return httpx.Response(200, request=request)
+                raise httpx2.RemoteProtocolError("dropped")
+            return httpx2.Response(error, request=request)
+        return httpx2.Response(200, request=request)
 
     return func, calls
 
@@ -36,7 +36,7 @@ def test_backoff_returns_after_transient_errors(error):
 
 @pytest.mark.parametrize(
     "error, exc",
-    [(None, httpx.RemoteProtocolError), (503, httpx.HTTPStatusError)],
+    [(None, httpx2.RemoteProtocolError), (503, httpx2.HTTPStatusError)],
 )
 def test_backoff_reraises_when_retries_exhausted(error, exc):
     func, calls = make_flaky(MAX_RETRIES, error)
@@ -47,7 +47,7 @@ def test_backoff_reraises_when_retries_exhausted(error, exc):
 
 def test_backoff_does_not_sleep_after_last_attempt(sleeps):
     func, _ = make_flaky(MAX_RETRIES)
-    with pytest.raises(httpx.RemoteProtocolError):
+    with pytest.raises(httpx2.RemoteProtocolError):
         backoff(func)
     assert sleeps == [2**i for i in range(1, MAX_RETRIES)]
 
@@ -58,7 +58,7 @@ def test_backoff_without_retries_makes_one_attempt(monkeypatch, sleeps, max_retr
     func, calls = make_flaky(0)
     assert backoff(func).status_code == 200
     func, calls = make_flaky(1)
-    with pytest.raises(httpx.RemoteProtocolError):
+    with pytest.raises(httpx2.RemoteProtocolError):
         backoff(func)
     assert len(calls) == 1
     assert sleeps == []
@@ -66,6 +66,6 @@ def test_backoff_without_retries_makes_one_attempt(monkeypatch, sleeps, max_retr
 
 def test_backoff_does_not_retry_client_errors():
     func, calls = make_flaky(1, 404)
-    with pytest.raises(httpx.HTTPStatusError):
+    with pytest.raises(httpx2.HTTPStatusError):
         backoff(func)
     assert len(calls) == 1

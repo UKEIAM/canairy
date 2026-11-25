@@ -1,28 +1,27 @@
-from datetime import datetime, timedelta
-import time
-from typing import Any, ClassVar, TypeGuard, get_args
 import logging
+import time
+from datetime import datetime, timedelta
+from typing import Any, ClassVar, TypeGuard, get_args
 
-from hishel.httpx import SyncCacheClient
-import httpx
+import httpx2
+from hishel.httpx2 import CacheClient
 from ratelimit import limits, sleep_and_retry
 
 from ._models import (
     BERLIN,
     BaseParams,
     Component,
-    ComponentParams,
     ComponentData,
     ComponentDataParams,
+    ComponentParams,
     Core,
+    ListParams,
     Station,
+    StationData,
     StationDataParams,
     Threshold,
-    ListParams,
-    StationData,
 )
-
-from ._typing import GroupCodes_T, TimeSpans_T, Periods_T
+from ._typing import GroupCodes_T, Periods_T, TimeSpans_T
 
 __all__ = ["LuftmessnetzClient"]
 
@@ -50,7 +49,7 @@ class LuftmessnetzClient:
     BASE_URL: ClassVar[str]
 
     def __init__(self) -> None:
-        self._client = SyncCacheClient(timeout=60)
+        self._client = CacheClient(timeout=60, rfc=True)
 
     def get_components(
         self,
@@ -183,12 +182,12 @@ class LuftmessnetzClient:
         return f"{self.BASE_URL}/{endpoint}"
 
 
-def backoff(func, *args, **kwargs) -> Any:   # type: ignore
+def backoff(func, *args, **kwargs) -> Any:
     base = 2
     for i in range(1, MAX_RETRIES):
         try:
             return func(*args, **kwargs)
-        except httpx.RemoteProtocolError:
+        except httpx2.RemoteProtocolError:
             logger.debug(f"RemoteProtocolError: retry {i}")
             time.sleep(base**i)
     # The last attempt (the only one if MAX_RETRIES <= 1) raises its error.
