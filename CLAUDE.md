@@ -82,7 +82,7 @@ UBA specifics:
 
 ## Documentation
 
-MkDocs with Material (`mkdocs.yml` at the root, pages in `docs/`, dependencies in the `docs` group). Build with `uv run --group docs mkdocs build --strict` (preview: `mkdocs serve`); CI runs the strict build in the lint job. `docs/apis/index.md` ("Air quality APIs in Germany") is the survey of all state networks; `docs/apis/<client>.md` holds everything known about each implemented client (usage, findings, limitations). Update these pages together with the code when behaviour or findings change. Material for MkDocs reaches end of life on 2027-05-05; Zensical is its successor and reads `mkdocs.yml`.
+[Zensical](https://zensical.org) (`zensical.toml` at the root, pages in `docs/`, dependencies in the `docs` group). Build with `uv run --group docs zensical build --strict` (preview: `zensical serve`); strict mode aborts on broken links and anchors. CI runs the strict build in the lint job. `docs/apis/index.md` ("Air quality APIs in Germany") is the survey of all state networks; `docs/apis/<client>.md` holds everything known about each implemented client (usage, findings, limitations). Update these pages together with the code when behaviour or findings change.
 
 ## CI
 

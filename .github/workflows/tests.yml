@@ -21,9 +21,7 @@ jobs:
       - run: uv sync --locked --group docs
       - run: uv run ruff check src tests
       - run: uv run mypy src
-      - run: uv run mkdocs build --strict
-        env:
-          NO_MKDOCS_2_WARNING: "1"
+      - run: uv run zensical build --strict
 
   offline:
     runs-on: ubuntu-latest
