@@ -9,7 +9,7 @@ uv run ruff check src tests
 uv run mypy src
 
 # offline tests only
-uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore-glob='tests/uba/test_get_*.py'
+uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore=tests/ni/test_ni_client.py --ignore=tests/nrw/test_nrw_client.py --ignore-glob='tests/uba/test_get_*.py'
 
 # tests with coverage
 uv run coverage run -m pytest && uv run coverage report
