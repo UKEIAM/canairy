@@ -10,7 +10,7 @@ from ratelimit import limits, sleep_and_retry
 from ._models import BaseParams
 from ._typing import Language, Usage
 from .components import UBAComponentsGetParams, UBAComponentsGetResponse
-from .measures import UBAMeasuresGetRequestParams
+from .measures import UBAMeasuresGetRequestParams, UBAMeasuresLimitsGetResponse
 from .measures._models import UBAMeasuresGetResponse
 from .networks import UBANetworksGetParams, UBANetworksGetResponse
 from .scopes import UBAScopesGetParams, UBAScopesGetResponse
@@ -77,6 +77,19 @@ class UBAClient:
         )
         response = self._get("measures", params=params)
         return UBAMeasuresGetResponse.from_response(response)
+
+    def get_measures_limits(self) -> UBAMeasuresLimitsGetResponse:
+        """Get the first and last measurement start for every
+        scope/component/station combination that has data.
+
+        Combinations without any data are absent. One fast call covers all
+        stations, unlike `get_measures`, which needs a station.
+
+        Returns:
+            Measures limits response model.
+        """
+        response = self._get("measureslimits")
+        return UBAMeasuresLimitsGetResponse.from_response(response)
 
     def get_networks(self, lang: Language | None = None) -> UBANetworksGetResponse:
         """Get a list of all air qualityt measurement networks.

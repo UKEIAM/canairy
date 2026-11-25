@@ -49,26 +49,36 @@ def main(argv=None) -> int:
 
 
 def download_multi_station(client, year_start: int, outpath: pathlib.Path) -> None:
+    # One call lists the data range of every station/component/scope; skipping
+    # combinations without data in a year avoids most measures requests.
+    limits = client.get_measures_limits().lookup()
 
-    for year in range(year_start, datetime.date.today().year): 
+    for year in range(year_start, datetime.date.today().year):
         logger.info(f"New year: {year}")
+        start = datetime.datetime(year, 1, 1, 0, 0)
+        end = datetime.datetime(year, 12, 31, 23, 0)
         date_dir = outpath.joinpath(str(year))
         if not date_dir.exists():
             date_dir.mkdir(parents=True)
 
         for station in client.get_stations().data:
+            components = [
+                c
+                for c in DEFAULT_COMPONENTS
+                if (lim := limits.get((station.id, c.id, c.scope)))
+                and lim.overlaps(start, end)
+            ]
+            if not components:
+                logger.debug(f"Station {station.code}: no data in {year}, skipped")
+                continue
             logger.info(f"Station: {station.code}")
             station_dir = date_dir.joinpath(f"{station.code}")
             if not station_dir.exists():
                 station_dir.mkdir()
-            for component in DEFAULT_COMPONENTS:
+            for component in components:
                 logger.info(f"Component: {component.code}")
                 res = client.get_measures(
-                    datetime.datetime(year, 1, 1, 0, 0),
-                    datetime.datetime(year, 12, 31, 23, 0),
-                    station.id,
-                    component.id,
-                    component.scope,
+                    start, end, station.id, component.id, component.scope
                 )
                 fname = station_dir.joinpath(f"{component.code}_{component.scope}.pkl")
                 with fname.open("wb") as file:

@@ -27,7 +27,7 @@ uv run mypy src                           # type check (pydantic mypy plugin ena
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_utils.py`, `tests/uba/test_backoff.py` and `tests/luftmessnetz/test_*.py` are offline.
+Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_backoff.py`, `tests/uba/test_measures_limits.py`, `tests/scripts/` and `tests/luftmessnetz/test_*.py` are offline; `tests/uba/test_utils.py` is not run by the integration job but its station-filter tests do hit the live API.
 
 ## Architecture
 
@@ -56,9 +56,9 @@ UBA specifics:
 - The API returns column-oriented data: an `indices` list naming columns and rows as positional lists (keyed by numeric strings or nested station → start-date dicts). Components and scopes zip rows against model field order, so **model field order must match the API column order**; `EXPECTED_*_INDICES` constants guard this and raise `ValueError` on drift. Measures zip rows against the response indices normalized to field names (`normalize_response_indices`).
 - Time handling: the API uses hours 1–24. `from_dt` helpers convert `datetime` → `(date, hour+1)`; response parsing converts back (`time - 1h`, `24:00` → next day `00:00`).
 - Station rows arrive as flat dicts with prefixed keys (`"type …"`, `"network …"`, `"setting …"`), regrouped by `Station.from_flat_dict`. Pass `lang="en"` for English type/setting names.
-- `measures` without a `station` parameter fails (HTTP 500); query per station. Data starts 2016-01-01. The `meta` endpoint times out (504); `measures/limits` (not wrapped by the client) returns first/last date per scope × component × station in one fast call.
+- `measures` without a `station` parameter fails (HTTP 500); query per station. Data starts 2016-01-01. The `meta` endpoint times out (504). `get_measures_limits` (`measureslimits/json`; `measures/limits` also works but not with the `/json` suffix) returns the first/last measurement start per scope × component × station in one fast call; combinations without data are absent (spot-checked against `measures`).
 
-`scripts/downloader.py` (`aq-downloader` entry point) iterates years × all UBA stations (all of Germany) × `DEFAULT_COMPONENTS` and pickles `model_dump(mode="json")` results to `<outpath>/<year>/<station_code>/<component>_<scope>.pkl`, logging to `<outpath>/download.log`.
+`canairy/scripts/downloader.py` (`aq-downloader` entry point) iterates years × all UBA stations (all of Germany) × `DEFAULT_COMPONENTS`, skips combinations whose `get_measures_limits` range misses the year (no file or station dir is written for them), and pickles `model_dump(mode="json")` results to `<outpath>/<year>/<station_code>/<component>_<scope>.pkl`, logging to `<outpath>/download.log`.
 
 
 ## CI
