@@ -1,18 +1,19 @@
 import httpx2
 import pytest
 
-from canairy._luftmessnetz import _client
+from canairy import _http
 from canairy.hh import HHClient
 
 
 @pytest.fixture(autouse=True)
 def no_sleep(monkeypatch):
-    monkeypatch.setattr(_client.time, "sleep", lambda _: None)
+    monkeypatch.setattr(_http.time, "sleep", lambda _: None)
 
 
 def make_client(handler):
     client = HHClient()
-    client._client = httpx2.Client(transport=httpx2.MockTransport(handler))
+    transport = _http.build_transport(httpx2.MockTransport(handler))
+    client._client = httpx2.Client(transport=transport)
     return client
 
 

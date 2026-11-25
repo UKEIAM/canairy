@@ -27,22 +27,24 @@ uv run mypy src                           # type check (pydantic mypy plugin ena
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
 ```
 
-Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/uba/test_backoff.py`, `tests/uba/test_measures_limits.py`, `tests/scripts/` and `tests/luftmessnetz/test_*.py` are offline; `tests/uba/test_utils.py` is not run by the integration job but its station-filter tests do hit the live API.
+Tests in `tests/hh/test_hh_client.py`, `tests/be/test_be_client.py` and `tests/uba/test_get_*.py` are integration tests against the real APIs (network required, subject to rate limits/caching). `tests/test_http.py`, `tests/uba/test_client.py`, `tests/uba/test_measures_limits.py`, `tests/scripts/` and `tests/luftmessnetz/test_*.py` are offline; `tests/uba/test_utils.py` is not run by the integration job but its station-filter tests do hit the live API.
 
 ## Architecture
 
-The luftmessnetz clients (HH, BE) and the UBA client share the same shape, implemented independently (no base module shared between luftmessnetz and UBA):
+The luftmessnetz clients (HH, BE) and the UBA client share the same shape, implemented independently (no API logic shared between luftmessnetz and UBA; only HTTP plumbing lives in `canairy._http`):
 
 - A client class with typed public `get_*` methods. Each builds a pydantic `*Params` model, calls `_get`, and parses the JSON via a `from_response` classmethod on a response model.
-- `_get` dumps params with `model_dump(exclude_none=True)`, is rate-limited with `ratelimit` (`@sleep_and_retry @limits(120, period=60)`), and wraps the request in a module-level `backoff()` (exponential `2**i` s, `MAX_RETRIES = 8`). Retry behaviour differs per client, see below; neither retries timeouts or connect errors.
-- HTTP goes through `httpx2` (not `httpx`) via a `hishel.httpx2.CacheClient(timeout=60, rfc=True)`, so repeated calls may be served from cache. Keep `rfc=True`: hishel 2.0's default ignores `Cache-Control` and caches every GET forever.
+- `_get` dumps params with `model_dump(exclude_none=True)`, sends one GET and calls `raise_for_status().json()`. Rate limiting and retries happen in the transport stack built by `canairy._http.build_client`: `Client → CacheTransport → RetryTransport → RateLimitTransport → HTTPTransport`. The limiter sits below the cache, so cache hits are free, and below the retry layer, so retries count.
+- `RateLimitTransport`: at most `CALLS = 120` requests per `PERIOD = 60` s (sliding window) **per host, process-wide**, so HH, BE and UBA each have their own budget, and extra client instances don't raise it.
+- `RetryTransport`: retries `httpx2.RemoteProtocolError` (also when raised while reading the body, so it buffers each body) and the client's `retry_statuses` with exponential `2**i` s backoff, `MAX_RETRIES = 8` attempts; once exhausted it re-raises the error or returns the last response. Timeouts and connect errors are not retried. Offline tests build clients with `build_transport(httpx2.MockTransport(...))` to keep the retry/limit layers.
+- HTTP goes through `httpx2` (not `httpx`): `httpx2.Client(timeout=60)` with a `hishel.httpx2.CacheTransport(rfc=True)` on top of the stack, so repeated calls may be served from cache. Keep `rfc=True`: hishel 2.0's default ignores `Cache-Control` and caches every GET forever. Because an explicit transport is passed, env proxies (`HTTP(S)_PROXY`) bypass the stack.
 - `_typing.py` holds `Literal` aliases for allowed API parameter values; `_models.py` holds pydantic params/response models.
 
 Luftmessnetz (HH Hamburg, BE Berlin) specifics:
 - Both networks run the same software; their Swagger specs (`/api/doc`) are identical apart from title. All code lives in the private `canairy._luftmessnetz` package (`LuftmessnetzClient`, neutral model names like `Station`). `canairy.hh`/`canairy.be` only subclass the client with a `BASE_URL` and re-export the models under `HH`/`BE`-prefixed aliases (`HHStation is BEStation`). Offline tests for the shared code are in `tests/luftmessnetz/`.
 - Responses are lists of objects; models subclass `ItemListModel` and use `validation_alias` for camelCase fields.
 - `_get` sends a single GET per call (all endpoints answer with a content-length; there is no HEAD probe or streaming path).
-- `backoff()` retries only `httpx2.RemoteProtocolError` and re-raises the last error once retries are exhausted.
+- No retry statuses: only dropped connections (`RemoteProtocolError`) are retried.
 - Datetimes are serialized as `%d.%m.%Y %H:%M` and interpreted as Europe/Berlin local time; `DatetimeRangeParams` converts aware datetimes to naive Berlin time (naive ones are taken as Berlin time). Responses carry `+01:00`/`+02:00` offsets.
 - **Silent truncation** (measured on HH and BE, identical): the API moves a custom `start` forward to `end - 31 days` for `1h`, `8hg`, `24hg` and `end - 365 days` for `24h` (local calendar days, both ends inclusive, so usually 745/366 timestamps), with HTTP 200 and no hint in the response. The spec at `/api/doc` only mentions "1 month" for `1h`/`24hg` and "1 year" for `24h`; `8hg` and the exact day counts were measured; they are fixed day counts, not calendar months (end `06.03.2025` moves start to `03.02.2025`, not `06.02.`). `RANGE_LIMITS` and `split_range` in `_client.py` encode this; `_get_data` requests custom ranges window by window (newest first) and drops the boundary row the windows share, keyed on `(datetime, station, component)`. For `get_component_data` the period comes from the code suffix (`pm10_1h` → `1h`, case-insensitive like the API); an unknown suffix only fails for custom ranges. Non-custom timespans (`lastyear`, `all`, …) are passed through unsplit and have not been probed for limits; neither have `1m`/`1y`/`*aot40`.
 - Data rows come newest first, sorted by datetime across all stations/components (not grouped by component).
@@ -52,7 +54,7 @@ Luftmessnetz (HH Hamburg, BE Berlin) specifics:
 
 UBA specifics:
 - Each endpoint has its own subpackage (`components/`, `measures/`, `networks/`, `scopes/`, `stations/`, `thresholds/`); public models carry a `UBA` prefix (e.g. `UBAComponentsGetResponse`). `uba/_models.py` holds shared bases; `uba/utils.py` has station filters and index-normalization helpers. URLs are `{BASE_URL}/{endpoint}/json`.
-- `backoff()` retries `httpx2.RemoteProtocolError`, 5xx and 429, raises other 4xx immediately, and re-raises the last error once retries are exhausted.
+- Retry statuses `UBA_RETRY_STATUSES` (429 and 5xx) besides `RemoteProtocolError`; other 4xx raise `HTTPStatusError` immediately.
 - The API returns column-oriented data: an `indices` list naming columns and rows as positional lists (keyed by numeric strings or nested station → start-date dicts). Components and scopes zip rows against model field order, so **model field order must match the API column order**; `EXPECTED_*_INDICES` constants guard this and raise `ValueError` on drift. Measures zip rows against the response indices normalized to field names (`normalize_response_indices`).
 - Time handling: the API uses hours 1–24. `from_dt` helpers convert `datetime` → `(date, hour+1)`; response parsing converts back (`time - 1h`, `24:00` → next day `00:00`).
 - Station rows arrive as flat dicts with prefixed keys (`"type …"`, `"network …"`, `"setting …"`), regrouped by `Station.from_flat_dict`. Pass `lang="en"` for English type/setting names.

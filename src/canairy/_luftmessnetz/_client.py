@@ -1,12 +1,7 @@
-import logging
-import time
 from datetime import datetime, timedelta
 from typing import Any, ClassVar, TypeGuard, get_args
 
-import httpx2
-from hishel.httpx2 import CacheClient
-from ratelimit import limits, sleep_and_retry
-
+from .._http import build_client
 from ._models import (
     BERLIN,
     BaseParams,
@@ -25,8 +20,6 @@ from ._typing import GroupCodes_T, Periods_T, TimeSpans_T
 
 __all__ = ["LuftmessnetzClient"]
 
-logger = logging.getLogger(__name__)
-MAX_RETRIES = 8
 
 # The API silently moves a custom start forward to `end - limit` (both ends
 # inclusive, local calendar days). Periods not listed here are not split.
@@ -49,7 +42,7 @@ class LuftmessnetzClient:
     BASE_URL: ClassVar[str]
 
     def __init__(self) -> None:
-        self._client = CacheClient(timeout=60, rfc=True)
+        self._client = build_client()
 
     def get_components(
         self,
@@ -168,30 +161,14 @@ class LuftmessnetzClient:
             shared = {_row_key(row) for row in response if row["datetime"] == oldest}
         return rows
 
-    @sleep_and_retry
-    @limits(120, period=60)
     def _get(self, endpoint: str, params: BaseParams | None = None) -> Any:
         params_ = params.model_dump(exclude_none=True) if params else None
-        return (
-            backoff(self._client.get, self._url(endpoint), params=params_)
-            .raise_for_status()
-            .json()
-        )
+        rsp = self._client.get(self._url(endpoint), params=params_)
+        return rsp.raise_for_status().json()
 
     def _url(self, endpoint: str) -> str:
         return f"{self.BASE_URL}/{endpoint}"
 
-
-def backoff(func, *args, **kwargs) -> Any:
-    base = 2
-    for i in range(1, MAX_RETRIES):
-        try:
-            return func(*args, **kwargs)
-        except httpx2.RemoteProtocolError:
-            logger.debug(f"RemoteProtocolError: retry {i}")
-            time.sleep(base**i)
-    # The last attempt (the only one if MAX_RETRIES <= 1) raises its error.
-    return func(*args, **kwargs)
 
 
 def _row_key(row: dict[str, Any]) -> tuple[str, str, str]:

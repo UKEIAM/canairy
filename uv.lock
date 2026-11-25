@@ -130,7 +130,6 @@ dependencies = [
     { name = "hishel", extra = ["httpx2"] },
     { name = "httpx2" },
     { name = "pydantic" },
-    { name = "ratelimit" },
     { name = "tzdata" },
 ]
 
@@ -148,7 +147,6 @@ requires-dist = [
     { name = "hishel", extras = ["httpx2"], specifier = ">=2.0" },
     { name = "httpx2", specifier = ">=2.16.2" },
     { name = "pydantic", specifier = ">=2.14.4" },
-    { name = "ratelimit", specifier = ">=2.2.1" },
     { name = "tzdata", specifier = ">=2026.6" },
 ]
 
@@ -1196,12 +1194,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/cf/caa0bd5f7a1b139b9240faf3b34586867656f682774364101572e8e84f80/pyzmq-27.3.0-pp312-pypy312_pp80-manylinux_2_28_i686.whl", hash = "sha256:cdb5efd4c23465573e928fb8429e40996ac0e1a4809365efe19e2753112b6ee1", size = 821382, upload-time = "2026-11-04T00:31:19.451Z" },
     { url = "https://files.pythonhosted.org/packages/8e/34/81fa1d9701024eb4f48949ba5f93da3a063ab997e0e0c9787ff37f11ecda/pyzmq-27.3.0-pp312-pypy312_pp80-win_amd64.whl", hash = "sha256:1b7ab96158dd50d7e6e430e6e4f744aaccee1df2e9d167ace9e7d2f3e3051712", size = 564187, upload-time = "2026-11-04T00:31:21.486Z" },
 ]
-
-[[package]]
-name = "ratelimit"
-version = "2.2.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ab/38/ff60c8fc9e002d50d48822cc5095deb8ebbc5f91a6b8fdd9731c87a147c9/ratelimit-2.2.1.tar.gz", hash = "sha256:af8a9b64b821529aca09ebaf6d8d279100d766f19e90b5059ac6a718ca6dee42", size = 5251, upload-time = "2018-12-17T18:55:49.675Z" }
 
 [[package]]
 name = "ruff"

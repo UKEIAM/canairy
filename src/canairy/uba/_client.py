@@ -1,12 +1,7 @@
 import datetime
-import logging
-import time
 from typing import Any, Literal
 
-import httpx2
-from hishel.httpx2 import CacheClient
-from ratelimit import limits, sleep_and_retry
-
+from .._http import UBA_RETRY_STATUSES, build_client
 from ._models import BaseParams
 from ._typing import Language, Usage
 from .components import UBAComponentsGetParams, UBAComponentsGetResponse
@@ -19,15 +14,12 @@ from .thresholds import UBAThresholdsGetParams, UBAThresholdsGetResponse
 
 __all__ = ["UBAClient"]
 
-logger = logging.getLogger(__name__)
-MAX_RETRIES = 8
-
 
 class UBAClient:
     BASE_URL = "https://luftdaten.umweltbundesamt.de/api/air-data/v4"
 
     def __init__(self) -> None:
-        self._client = CacheClient(timeout=60, rfc=True)
+        self._client = build_client(UBA_RETRY_STATUSES)
 
     def get_stations(
         self,
@@ -121,29 +113,12 @@ class UBAClient:
         response = self._get("thresholds", params)
         return UBAThresholdsGetResponse.from_response(response)
 
-    @sleep_and_retry
-    @limits(120, period=60)
     def _get(self, endpoint: str, params: BaseParams | None = None) -> Any:
         params_ = params.model_dump(exclude_none=True) if params else None
-
-        rsp = backoff(self._client.get, self._url(endpoint), params=params_)
-        return rsp.json()
+        # 429 and 5xx are retried by the transport; raise what is left.
+        rsp = self._client.get(self._url(endpoint), params=params_)
+        return rsp.raise_for_status().json()
 
     def _url(self, endpoint: str) -> str:
         return f"{UBAClient.BASE_URL}/{endpoint}/json"
 
-
-def backoff(func, *args, **kwargs) -> Any:
-    base = 2
-    for i in range(1, MAX_RETRIES):
-        try:
-            return func(*args, **kwargs).raise_for_status()
-        except httpx2.RemoteProtocolError:
-            logger.debug(f"RemoteProtocolError: retry {i}")
-        except httpx2.HTTPStatusError as exc:
-            if exc.response.status_code < 500 and exc.response.status_code != 429:
-                raise
-            logger.debug(f"HTTPStatusError {exc.response.status_code}: retry {i}")
-        time.sleep(base**i)
-    # The last attempt (the only one if MAX_RETRIES <= 1) raises its error.
-    return func(*args, **kwargs).raise_for_status()
