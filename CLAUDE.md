@@ -21,6 +21,7 @@ uv sync                                   # install incl. dev group
 uv run pytest                             # all tests, incl. live API integration tests
 uv run pytest --ignore=tests/hh/test_hh_client.py --ignore=tests/be/test_be_client.py --ignore-glob='tests/uba/test_get_*.py'  # offline only
 uv run pytest tests/uba/test_get_measures.py::<name>  # single test
+uv run coverage run -m pytest && uv run coverage report  # tests with coverage (config in pyproject.toml)
 uv run ruff check src tests               # lint
 uv run mypy src                           # type check (pydantic mypy plugin enabled)
 uv run aq-downloader <outpath> -y 2016    # bulk UBA download CLI
@@ -62,7 +63,7 @@ UBA specifics:
 
 ## CI
 
-`.github/workflows/tests.yml` (push to `develop`, PRs, manual): ruff + mypy; offline tests on 3.12–3.15; live integration tests once on 3.15 (not per version, to respect API rate limits). All jobs use `uv sync --locked`, so keep `uv.lock` in sync with `pyproject.toml`.
+`.github/workflows/tests.yml` (push to `develop`, PRs, manual): ruff + mypy; offline tests on 3.12–3.15; live integration tests once on 3.15 (not per version, to respect API rate limits). Both test jobs run under `coverage` and upload their data files; the `coverage` job combines them via `py-cov-action/python-coverage-comment-action` (PR comment; on `develop` pushes it updates the README badge stored in the `python-coverage-comment-action-data` branch). All jobs use `uv sync --locked`, so keep `uv.lock` in sync with `pyproject.toml`.
 
 ## Docker
 

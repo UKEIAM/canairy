@@ -34,6 +34,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.17.5",
     "ipykernel>=7.4.0",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
@@ -63,3 +64,13 @@ python_version = "3.12"
 
 [tool.ruff.lint]
 extend-select = ["B"]
+
+[tool.coverage.run]
+source = ["canairy"]
+branch = true
+# Relative paths let CI combine data files from different jobs/runners.
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
